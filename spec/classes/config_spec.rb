@@ -5,23 +5,29 @@
 require 'spec_helper'
 
 describe '::lxd::config' do
+  let(:pre_condition) do
+    "class { 'lxd': 
+      lxd_core_https_address => '192.168.0.100:8443',
+      lxd_core_trust_password => 'sekret',
+    }"
+  end
 
-    let(:pre_condition) {"
-        class {'lxd': }
-    "}
-
-
-    # it should compile
-    it { is_expected.to compile}
-    it { is_expected.to contain_lxd_config('global_images.auto_update_interval').with(
-        'ensure' => 'present',
-        'value'  => 0,
-    )}
-    it { is_expected.to contain_lxd_config('global_core.https_address').with(
-        'ensure' => 'absent',
-    )}
-    it { is_expected.to contain_lxd_config('global_core.trust_password').with(
-        'ensure' => 'absent',
-    )}
+  # it should compile
+  it { is_expected.to compile }
+  it do
+    is_expected.to contain_lxd_config('global_images.auto_update_interval').with(
+      'ensure' => 'present',
+      'value' => 0,
+    )
+  end
+  it do
+    is_expected.to contain_lxd_config('global_core.https_address').with(
+      'ensure' => 'absent',
+    )
+  end
+  it do
+    is_expected.to contain_lxd_config('global_core.trust_password').with(
+      'ensure' => 'absent',
+    )
+  end
 end
-

@@ -1,19 +1,22 @@
-class mymodule {
- 
+# @summary Example usage for a single LXD node
+#
+# This class represents your profile, where the module will be used.
+#
+class myprofile { # lint:ignore:autoloader_layout
     class {'::lxd': }
- 
+
     lxd::storage { 'default':
         driver => 'dir',
         config => {
             'source' => '/var/lib/lxd/storage-pools/default'
         }
     }
- 
+
     lxd::profile { 'exampleprofile':
         ensure  => 'present',
         config  => {
             'environment.http_proxy' => '',
-            'limits.memory' => '2GB',
+            'limits.memory'          => '2GB',
         },
         devices => {
             'root' => {
@@ -28,23 +31,23 @@ class mymodule {
             }
         }
     }
- 
+
     lxd::image { 'ubuntu1804':
         ensure      => 'present',
         repo_url    => 'http://example.net/lxd-images/',
         image_file  => 'ubuntu1804.tar.gz',
         image_alias => 'ubuntu1804',
     }
- 
+
     lxd::container { 'container01':
-        state   => 'started',
-        config  => {
+        state    => 'started',
+        config   => {
             'user.somecustomconfig' => 'My awesome custom env variable',
         },
         profiles => ['exampleprofile'],
-        image   => 'ubuntu1804',
-        devices => {
-            'log'  => {
+        image    => 'ubuntu1804',
+        devices  => {
+            'log'       => {
                 'path'   => '/var/log/',
                 'source' => '/srv/log01',
                 'type'   => 'disk',

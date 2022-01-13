@@ -32,7 +32,7 @@
 #
 class lxd(
     Enum['present', 'absent'] $ensure                          = $lxd::params::ensure,
-    Option[String]            $version                         = $lxd::params::version,
+    Optional[String]          $version                         = $lxd::params::version,
     Array[String]             $install_options                 = $lxd::params::install_options,
     Integer                   $lxd_auto_update_interval        = $lxd::params::lxd_auto_update_interval,
     Enum['present', 'absent'] $lxd_auto_update_interval_ensure = $lxd::params::lxd_auto_update_interval_ensure,
@@ -40,8 +40,8 @@ class lxd(
     Enum['present', 'absent'] $lxd_core_https_address_ensure   = $lxd::params::lxd_core_https_address_ensure,
     String                    $lxd_core_trust_password         = $lxd::params::lxd_core_trust_password,
     Enum['present', 'absent'] $lxd_core_trust_password_ensure  = $lxd::params::lxd_core_trust_password_ensure,
-    Enum['deb', 'snap']       $lxd_package_provider            = $lxd::params::package_provider,
-    Boolean                   $manage_snapd                    = $lxd::params::manage_snapd
+    Enum['deb', 'snap']       $lxd_package_provider            = $lxd::params::lxd_package_provider,
+    Boolean                   $manage_snapd                    = $lxd::params::lxd_manage_snapd
 ) inherits lxd::params {
     contain ::lxd::install
     contain ::lxd::config

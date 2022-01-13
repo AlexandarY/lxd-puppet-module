@@ -5,74 +5,83 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:lxd_storage).provider(:storage) do
-
   context 'with ensure present' do
     before(:each) do
-        @resource = Puppet::Type.type(:lxd_storage).new(
-            {
-                :ensure      => 'present',
-                :name        => 'somestorage',
-                :driver      => 'dir',
-                :description => 'desc',
-                :config      => { "source" => "/tmp/somestoragepool" },
-            }
-        )
-        @provider = described_class.new(@resource)
+      @resource = Puppet::Type.type(:lxd_storage).new(
+        {
+          # rubocop:disable HashSyntax
+          :ensure      => 'present',
+          :name        => 'somestorage',
+          :driver      => 'dir',
+          :description => 'desc',
+          :config      => { 'source' => '/tmp/somestoragepool' },
+          # rubocop:enable HashSyntax
+        },
+      )
+      @provider = described_class.new(@resource) # rubocop:todo InstanceVariable
     end
 
     context 'without storage-pools' do
-        before :each do
-            described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).returns('{}')
-        end
-        it 'will check if storage exists' do
-            expect(@provider.exists?).to be false
-        end
+      before :each do
+        described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).returns('{}')
+      end
+      it 'will check if storage exists' do
+        expect(@provider.exists?).to be false # rubocop:todo InstanceVariable
+      end
     end
     context 'with storage-pools' do
-        before :each do
-            described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).returns(
-                '[ "/1.0/storage-pools/somestorage" ]'
-            )
-        end
-        it 'will check for appropriate output' do
-            expect(@provider.exists?).to be true
-        end
+      before :each do
+        described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).returns(
+          '[ "/1.0/storage-pools/somestorage" ]',
+        )
+      end
+      it 'will check for appropriate output' do
+        expect(@provider.exists?).to be true # rubocop:todo InstanceVariable
+      end
     end
     context 'with creating storage' do
-        before :each do
-            described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).returns('{}')
-            described_class.expects(:lxc).with(['query', '--wait', '-X', 'POST', '-d', '{"name":"somestorage","driver":"dir","description":"desc","config":{"source":"/tmp/somestoragepool"}}', '/1.0/storage-pools']).returns('{}')
-        end
-        it 'will create appropriate config' do
-            expect(@provider.exists?).to be false
-            expect(@provider.create).to eq({})
-        end
+      before :each do
+        described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).returns('{}')
+        described_class.expects(:lxc).with(
+          [
+            'query', '--wait', '-X', 'POST', '-d',
+            '{"name":"somestorage","driver":"dir","description":"desc","config":{"source":"/tmp/somestoragepool"}}',
+            '/1.0/storage-pools'
+          ],
+        ).returns('{}')
+      end
+      it 'will create appropriate config' do
+        expect(@provider.exists?).to be false # rubocop:todo InstanceVariable
+        expect(@provider.create).to eq({}) # rubocop:todo InstanceVariable
+      end
     end
   end
 
   context 'with ensure absent' do
     before(:each) do
-        @resource = Puppet::Type.type(:lxd_storage).new(
-            {
-                :ensure      => 'absent',
-                :name        => 'somestorage',
-                :driver      => 'dir',
-                :description => 'desc',
-                :config      => { "source" => "/tmp/somestoragepool" },
-            }
-        )
-        @provider = described_class.new(@resource)
+      @resource = Puppet::Type.type(:lxd_storage).new(
+        {
+          # rubocop:disable HashSyntax
+          :ensure      => 'absent',
+          :name        => 'somestorage',
+          :driver      => 'dir',
+          :description => 'desc',
+          :config      => { 'source' => '/tmp/somestoragepool' },
+          # rubocop:enable HashSyntax
+        },
+      )
+      @provider = described_class.new(@resource) # rubocop:todo InstanceVariable
     end
 
     context 'with creating storage' do
-        before :each do
-            described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).returns('["/1.0/storage-pools/somestorage"]')
-            described_class.expects(:lxc).with(['query', '--wait', '-X', 'DELETE', '/1.0/storage-pools/somestorage']).returns('{}')
-        end
-        it 'will create appropriate config' do
-            expect(@provider.exists?).to be true
-            expect(@provider.destroy).to eq({})
-        end
+      before :each do
+        described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).returns('["/1.0/storage-pools/somestorage"]')
+        described_class.expects(:lxc).with(['query', '--wait', '-X', 'DELETE', '/1.0/storage-pools/somestorage']).returns('{}')
+      end
+      it 'will create appropriate config' do
+        expect(@provider.exists?).to be true # rubocop:todo InstanceVariable
+        expect(@provider.destroy).to eq({}) # rubocop:todo InstanceVariable
+      end
     end
   end
 end

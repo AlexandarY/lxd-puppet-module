@@ -4,15 +4,15 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:lxd_container), 'when validating attributes' do
- [:name, :image].each do |param|
-    it "should have a #{param} parameter" do
+describe Puppet::Type.type(:lxd_container) do
+  [:name, :image].each do |param|
+    it "has a #{param} parameter" do
       expect(Puppet::Type.type(:lxd_container).attrtype(param)).to eq(:param)
     end
-  end 
-  
+  end
+
   [:ensure, :config, :devices, :state].each do |prop|
-    it "should have a #{prop} property" do
+    it "has a #{prop} property" do
       expect(Puppet::Type.type(:lxd_container).attrtype(prop)).to eq(:property)
     end
   end

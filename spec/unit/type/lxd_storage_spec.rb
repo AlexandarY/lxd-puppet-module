@@ -4,15 +4,15 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:lxd_storage), 'when validating attributes' do
- [:name].each do |param|
-    it "should have a #{param} parameter" do
+describe Puppet::Type.type(:lxd_storage) do
+  [:name].each do |param|
+    it "has a #{param} parameter" do
       expect(Puppet::Type.type(:lxd_storage).attrtype(param)).to eq(:param)
     end
-  end 
-  
+  end
+
   [:ensure, :config, :driver].each do |prop|
-    it "should have a #{prop} property" do
+    it "has a #{prop} property" do
       expect(Puppet::Type.type(:lxd_storage).attrtype(prop)).to eq(:property)
     end
   end
@@ -24,7 +24,7 @@ describe Puppet::Type.type(:lxd_storage), 'when validating attributes' do
           driver: 'dir',
           description: 'Some desc',
           config: {},
-        )[:driver]
+        )[:driver],
       ).to include('dir')
     end
   end
