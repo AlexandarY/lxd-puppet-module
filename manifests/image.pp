@@ -1,13 +1,24 @@
-## Manage lxd images
+#
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 # Copyright 2020 The LXD Puppet module Authors. All rights reserved.
-
+#
+# @summary Manage LXD images
+#
+# @param ensure
+#   Ensure the state of the resource
+# @param repo_url
+#   LXD image mirror URL
+# @param image_file
+#   Name of the image file
+# @param image_alias
+#   Alias for the image being downloaded
+#
 define lxd::image(
-    $repo_url,
-    $image_file,
-    $image_alias,
-    $ensure = 'present',
+    String                    $repo_url,
+    String                    $image_file,
+    String                    $image_alias,
+    Enum['present', 'absent'] $ensure      = present,
 ) {
     validate_re($repo_url, "[^;']+")
     validate_re($image_file, "[^;']+")

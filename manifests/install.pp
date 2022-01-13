@@ -1,8 +1,12 @@
-## Installing LXD
+#
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 # Copyright 2020 The LXD Puppet module Authors. All rights reserved.
-
+#
+# @summary Performs install actions for LXD
+#
+# @api private
+#
 class lxd::install {
     if $::lxd::lxd_package_provider == 'deb' {
       package { 'lxd':
