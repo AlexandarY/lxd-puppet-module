@@ -1,5 +1,5 @@
 {
-  "name": "lxd-puppet-module",
+  "name": "puppet-lxd",
   "version": "1.0.0",
   "author": "Filip Dorosz",
   "summary": "",
@@ -24,7 +24,7 @@
       "version_requirement": ">= 4.10.0 < 7.0.0"
     }
   ],
-  "pdk-version": "1.18.0",
-  "template-url": "pdk-default#1.18.0",
-  "template-ref": "tags/1.18.0-0-g095317c"
+  "pdk-version": "2.2.0",
+  "template-url": "pdk-default#2.2.0",
+  "template-ref": "tags/2.2.0-0-g2381db6"
 }
