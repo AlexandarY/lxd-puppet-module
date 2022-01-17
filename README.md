@@ -89,18 +89,22 @@ For the values that can be configuration or devices please consult [LXD REST API
 
 ### lxd::image
 
-This define is responsible for adding images to your LXD daemon. It is prepared to be used with simple flat file hosting of images in .tar.gz format.  
-Just host your files in a directory on file server reachable through http(s) like:
-`https://images.example.com/lxd-images/`
+This define is responsible for adding images to your LXD daemon. It has two modes in which it can work:
 
-This define works by first downloading the image with wget to `/tmp` directory. Then it loads it into LXD with `lxd image import` command.
+ * `official`
 
-It does not allow fetching images from upstream image server at the moment.
+    It will attempt to retrieve the LXD image for both `container` or `vm` via the official LXD mirror.
+    The whole processed is handled by a custom type&provider - `lxd_image` - that can also be used separately from the puppet define.
 
-This define has the following parameters:
- * `repo_url` - repository server URL where you host your images. Example: `https://images.example.com/lxd-images/`.
- * `image_file` - image in the tar.gz format. Example: `myawesomeimage.tar.gz`.
- * `image_alias` - image alias. Example: `prod_image`.
+ * `custom`
+
+    It is prepared to be used with simple flat file hosting of images in .tar.gz format.  
+    Just host your files in a directory on file server reachable through http(s) like:
+    `https://images.example.com/lxd-images/`
+
+Overall, this define works by first downloading the image with wget to `/tmp` directory. Then it loads it into LXD with `lxd image import` command.
+
+More details on the parameters and examples can be found in `REFERENCES.md`
 
 ### lxd::storage
 
