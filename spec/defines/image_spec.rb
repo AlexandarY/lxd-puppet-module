@@ -16,7 +16,7 @@ describe 'lxd::image' do
             'repo_url' => 'http://somerepo.url/lxd-images',
             'image_file' => 'bionicimage.tar.gz',
             'image_alias' => 'bionic',
-            'pull_from' => 'custom'
+            'pull_via' => 'custom'
           }
         end
         let(:pre_condition) do
@@ -53,29 +53,23 @@ describe 'lxd::image' do
       end
 
       describe 'with official image server' do
-        let(:title) { 'debian:buster' }
+        let(:title) { 'debian:buster:amd64:default:container' }
         let(:params) do
           {
-            'arch' => 'amd64',
-            'image_type' => 'container',
-            'variant' => 'default',
-            'pull_from' => 'official'
+            'pull_via' => 'simplestream'
           }
         end
 
         context 'on ensure => present' do
           it { is_expected.to compile.with_all_deps }
           it do
-            is_expected.to contain_lxd_image('debian:buster').with(
+            is_expected.to contain_lxd_image('debian:buster:amd64:default:container').with(
               'ensure' => 'present',
-              'arch' => 'amd64',
-              'repo_url' => 'uk.lxd.images.canonical.com',
-              'img_type' => 'container',
-              'variant' => 'default',
+              'repo_url' => 'images.linuxcontainers.org'
             )
           end
           it do
-            is_expected.not_to contain_exec('lxd image present uk.lxd.images.canonical.com/')
+            is_expected.not_to contain_exec('lxd image present images.linuxcontainers.org/')
           end
         end
 
@@ -90,7 +84,7 @@ describe 'lxd::image' do
 
           it { is_expected.to compile.with_all_deps }
           it do
-            is_expected.to contain_lxd_image('debian:buster').with_ensure('absent')
+            is_expected.to contain_lxd_image('debian:buster:amd64:default:container').with_ensure('absent')
           end
           it do
             is_expected.not_to contain_exec(%r{lxd image absent})

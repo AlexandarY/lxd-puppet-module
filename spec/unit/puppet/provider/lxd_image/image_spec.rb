@@ -9,12 +9,9 @@ describe Puppet::Type.type(:lxd_image).provider(:image) do
     @resource = Puppet::Type.type(:lxd_image).new(
       # rubocop:disable HashSyntax
       {
-        :name        => 'debian:buster',
+        :name        => 'debian:buster:amd64:default:container',
         :ensure      => 'present',
-        :repo_url    => 'uk.lxd.images.canonical.com',
-        :arch        => 'amd64',
-        :img_type    => 'container',
-        :variant     => 'default',
+        :repo_url    => 'images.linuxcontainers.org',
       },
       # rubocop:enable HashSyntax
     )
@@ -42,7 +39,7 @@ describe Puppet::Type.type(:lxd_image).provider(:image) do
           "aliases": [
               {
                   "description": "",
-                  "name": "debian:buster"
+                  "name": "debian:buster:amd64:default:container"
               }
           ],
           "architecture": "x86_64",
@@ -130,7 +127,7 @@ describe Puppet::Type.type(:lxd_image).provider(:image) do
   context 'with retrieving image' do
     before :each do
       expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/images']).and_return('[]')
-      allow(described_class).to receive(:get_url_paths).with(['lxd.tar.xz', 'root.squashfs']).and_return(
+      allow(described_class).to receive(:get_url_paths).with(['lxd.tar.xz', 'root.squashfs'], 'debian:buster', 'amd64', 'default', 'uk.lxd.images.canonical.com').and_return(
         {
           'lxd.tar.xz' => {
             'path' => 'images/debian/buster/amd64/default/20220115_06:16/lxd.tar.xz',
@@ -142,9 +139,9 @@ describe Puppet::Type.type(:lxd_image).provider(:image) do
           },
         },
       )
-      allow(described_class).to receive(:download_image).with('/images/debian/buster/amd64/default/20220115_06:16/lxd.tar.xz', '/tmp/lxd.tar.xz').and_return(nil)
-      allow(described_class).to receive(:download_image).with('/images/debian/buster/amd64/default/20220115_06:16/root.squashfs', '/tmp/root.squashfs').and_return(nil)
-      expect(described_class).to receive(:lxc).with(['image', 'import', '/tmp/lxd.tar.xz', '/tmp/root.squashfs', '--alias', 'debian:buster']).and_return(nil)
+      allow(described_class).to receive(:download_image).with('uk.lxd.images.canonical.com', '/images/debian/buster/amd64/default/20220115_06:16/lxd.tar.xz', '/tmp/lxd.tar.xz').and_return(nil)
+      allow(described_class).to receive(:download_image).with('uk.lxd.images.canonical.com', '/images/debian/buster/amd64/default/20220115_06:16/root.squashfs', '/tmp/root.squashfs').and_return(nil)
+      expect(described_class).to receive(:lxc).with(['image', 'import', '/tmp/lxd.tar.xz', '/tmp/root.squashfs', '--alias', 'debian:buster:amd64:default:container']).and_return(nil)
     end
     it 'will create appropriate config' do
       expect(@provider.exists?).to be false # rubocop:todo InstanceVariable
@@ -157,12 +154,9 @@ describe Puppet::Type.type(:lxd_image).provider(:image) do
       @resource = Puppet::Type.type(:lxd_image).new(
         {
           # rubocop:disable HashSyntax
-          :name        => 'debian:buster',
+          :name        => 'debian:buster:amd64:default:container',
           :ensure      => 'absent',
-          :repo_url    => 'uk.lxd.images.canonical.com',
-          :arch        => 'amd64',
-          :img_type    => 'container',
-          :variant     => 'default',
+          :repo_url    => 'images.linuxcontainers.org'
           # rubocop:enable HashSyntax
         },
       )
@@ -181,7 +175,7 @@ describe Puppet::Type.type(:lxd_image).provider(:image) do
             "aliases": [
                 {
                     "description": "",
-                    "name": "debian:buster"
+                    "name": "debian:buster:amd64:default:container"
                 }
             ],
             "architecture": "x86_64",

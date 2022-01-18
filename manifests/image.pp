@@ -4,52 +4,45 @@
 # Copyright 2020 The LXD Puppet module Authors. All rights reserved.
 #
 # @summary Manage LXD images
-#   It's mandatory that the name is in the following format:
-#   <OS>:<release>
-#   and that it uses the release name and not release numbers!
-#
-#   Example: debian:buster | ubuntu:focal
+#   Type implements two ways to retrieve images specified via `pull_via` param.
+#     * `simplestream` - The official LXD way of retrieving images
+#     * `custom`       - It will utilize wget to retrieve a package and `lxc import` it.
+#   When used with `simplestream` it's expected that the name of the resource will be
+#   in the following format:
+#   <OS>:<Release>:<Architecture>:<Variant>:<Type>
+#   Example: debian:buster:amd64:default:container
 #
 # @example Example for retrieving from official image repository
-#   lxd::image { 'ubuntu:focal':
-#     ensure     => present,
-#     repo_url   => 'uk.lxd.images.canonical.com',
-#     arch       => 'amd64',
-#     image_type => 'container',
-#     variant    => 'default',
+#   lxd::image { 'ubuntu:focal:amd64:default:container':
+#     ensure   => present,
+#     repo_url => 'images.linuxcontainers.org'
 #   }
 #
 # @example Example for retrieving multiple variants of same OS Release
-#   lxd::image { 'debian:buster:amd64:default':
-#     ensure     => present,
-#     image_type => 'container',
-#     arch       => 'amd64',
-#     variant    => 'default'
+#   lxd::image { 'debian:buster:amd64:default:container':
+#     ensure => present,
 #   }
-#   lxd::image { 'debian:buster:amd64:cloud':
-#     ensure     => present,
-#     image_type => 'container',
-#     arch       => 'amd64',
-#     variant    => 'cloud'
+#   lxd::image { 'debian:buster:amd64:cloud:container':
+#     ensure => present,
 #   }
-#   lxd::image { 'debian:buster:amd64:cloud:vm':
-#     ensure     => present,
-#     image_type => 'virtual-machine',
-#     arch       => 'amd64',
-#     variant    => 'cloud'
+#   lxd::image { 'debian:buster:amd64:cloud:virtual-machine':
+#     ensure => present,
+#   }
+#
+# @example Example with custom image
+#   lxd::image { 'ubuntu1804':
+#     ensure      => present,
+#     pull_via    => 'custom',
+#     repo_url    => 'http://example.net/lxd-images/',
+#     image_file  => 'ubuntu1804.tar.gz',
+#     image_alias => 'ubuntu1804'
 #   }
 #
 # @param ensure
 #   Ensure the state of the resource
-# @param arch
-#   Architecture of the image
-# @param image_type
-#   If it's an image for container or VM
-# @param variant
-#   Variant of the Image.
 # @param repo_url
 #   LXD image mirror URL
-# @param pull_from
+# @param pull_via
 #   From where the image should be pulled
 # @param image_file
 #   Name of the image file
@@ -57,23 +50,17 @@
 #   Alias for the image being downloaded
 #
 define lxd::image(
-    Enum['present', 'absent']            $ensure        = present,
-    String                               $arch          = 'amd64',
-    Enum['container', 'virtual-machine'] $image_type    = 'container',
-    Enum['default', 'desktop', 'cloud']  $variant       = 'default',
-    String                               $repo_url      = 'uk.lxd.images.canonical.com',
-    Enum['official', 'custom']           $pull_from     = 'official',
-    Optional[String]                     $image_file    = undef,
-    Optional[String]                     $image_alias   = undef
+    Enum['present', 'absent']            $ensure      = present,
+    String                               $repo_url    = 'images.linuxcontainers.org',
+    Enum['simplestream', 'custom']       $pull_via    = 'simplestream',
+    Optional[String]                     $image_file  = undef,
+    Optional[String]                     $image_alias = undef
 ) {
-  case $pull_from {
-    'official': {
+  case $pull_via {
+    'simplestream': {
       lxd_image { $name:
         ensure   => $ensure,
-        repo_url => $repo_url,
-        arch     => $arch,
-        img_type => $image_type,
-        variant  => $variant
+        repo_url => $repo_url
       }
     }
     'custom': {
@@ -103,7 +90,7 @@ define lxd::image(
       }
     }
     default: {
-      fail("Unknown pull_from value - ${pull_from}")
+      fail("Unknown pull_from value - ${pull_via}")
     }
   }
 }

@@ -89,20 +89,52 @@ For the values that can be configuration or devices please consult [LXD REST API
 
 ### lxd::image
 
-This define is responsible for adding images to your LXD daemon. It has two modes in which it can work:
+This define is responsible for adding images to your LXD daemon. It has two modes in which it can pull the images via:
 
- * `official`
+ * `simplestream`
 
-    It will attempt to retrieve the LXD image for both `container` or `vm` via the official LXD mirror.
-    The whole processed is handled by a custom type&provider - `lxd_image` - that can also be used separately from the puppet define.
+    This is the default way the `lxc` client pulls the images.
+    It will attempt to retrieve the LXD image for both `container` or `vm`
+    via the official LXD mirror but it can be also pointed to an
+    internal `simplestream` LXD image server.
+    The whole processed is handled by a custom type & provider - `lxd_image` -
+    that can also be used separately from the puppet define.
+
+    Example:
+    ```
+    # This will retrieve a container image of the default variant
+    # for the Debian Buster release built for amd64.
+    lxd::image { 'debian:buster:amd64:default:container':
+      ensure   => present,
+      repo_url => 'images.linuxcontainers.org'
+    }
+
+    # This will retrieve a virtual-machine image of the cloud variant
+    # for the Debian Bullseye release built for amd64.
+    lxd::image { 'debian:bullseye:amd64:cloud:container':
+      ensure   => present,
+      repo_url => 'images.linuxcontainers.org'
+    }
+    ```
 
  * `custom`
 
-    It is prepared to be used with simple flat file hosting of images in .tar.gz format.  
+    It is prepared to be used with simple file hosting of images in .tar.gz format.
     Just host your files in a directory on file server reachable through http(s) like:
     `https://images.example.com/lxd-images/`
+    
+    Overall, this define works by first downloading the image with wget to `/tmp` directory. Then it loads it into LXD with `lxd image import` command.
 
-Overall, this define works by first downloading the image with wget to `/tmp` directory. Then it loads it into LXD with `lxd image import` command.
+    Example:
+    ```
+    lxd::image { 'ubuntu1804':
+      ensure      => present,
+      pull_via    => 'custom',
+      repo_url    => 'http://example.net/lxd-images/',
+      image_file  => 'ubuntu1804.tar.gz',
+      image_alias => 'ubuntu1804'
+    }
+    ```
 
 More details on the parameters and examples can be found in `REFERENCES.md`
 
