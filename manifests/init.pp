@@ -11,17 +11,17 @@
 #   Version to be installed
 # @param install_options
 #   Additional install options passed to apt eg. `-t trusty-backports`
-# @param lxd_auto_update_interval_ensure
+# @param auto_update_interval_ensure
 #   Manage Auto Update Interval
-# @param lxd_auto_update_interval
+# @param auto_update_interval
 #   Default interval to update remote images, 0 to disable
-# @param lxd_core_https_address_ensure
+# @param core_https_address_ensure
 #   Manage LXD Core HTTPS Address
-# @param lxd_core_https_address
+# @param core_https_address
 #   HTTPS address on which LXD to listen to
-# @param lxd_core_trust_password_ensure
+# @param core_trust_password_ensure
 #   Manage LXD default trust password for clustering
-# @param lxd_core_trust_password
+# @param core_trust_password
 #   LXD trust password for clusters
 # @param lxd_package_provider
 #   Which package provider should install lxd.

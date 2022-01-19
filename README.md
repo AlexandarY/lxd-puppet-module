@@ -49,18 +49,24 @@ It needs the follwing Puppet modules to operate:
 ### lxd 
 
 Init class. Installs LXD itself and provision basic configuration. It also forces correct resource order.  
-It has the following params:
- * `version` - which version of the package should be installed,
- * `ensure` - defaults to present,
- * `install_options` - additional install options passed to apt eg. `-t trusty-backports`,
- * `lxd_auto_update_interval` - default interval to update remote images, 0 to disable,
- * `lxd_auto_update_interval_ensure` - enabling above feature,
- * `lxd_core_https_address` - default port for LXD daemon to listen on when in online mode,
- * `lxd_core_https_address_ensure` - enabling above feature,
- * `lxd_core_trust_password` - default trust password for LXD daemon for clustering,
- * `lxd_core_trust_password_ensure` - enabling above feature.
 
-All this params have default values in `params.pp`.
+Check `REFERENCES.md` for description of all parameters and check the `examples/` directory for example usage.
+
+All the params have default values in `params.pp`.
+
+Simple Example:
+
+```
+class { 'lxd':
+  ensure                      => present,
+  auto_update_interval        => 6,
+  auto_update_interval_ensure => present,
+  core_https_addres           => '192.168.0.100:8443',
+  core_https_address_ensure   => present,
+  core_trust_password         => 'sekret',
+  core_trust_password_ensure  => present
+}
+```
 
 ## Defines
 
