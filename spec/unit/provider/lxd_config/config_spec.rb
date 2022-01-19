@@ -21,7 +21,7 @@ describe Puppet::Type.type(:lxd_config).provider(:config) do
 
   context 'without lxc config' do
     before :each do
-      described_class.expects(:lxc).with(['config', 'get', 'images.auto_update_interval']).returns('\n')
+      expect(described_class).to receive(:lxc).with(['config', 'get', 'images.auto_update_interval']).and_return("\n")
     end
     it 'will check for appropriate config' do
       expect(@provider.exists?).to be false # rubocop:todo InstanceVariable
@@ -29,7 +29,7 @@ describe Puppet::Type.type(:lxd_config).provider(:config) do
   end
   context 'with lxc config' do
     before :each do
-      described_class.expects(:lxc).with(['config', 'get', 'images.auto_update_interval']).returns('0')
+      expect(described_class).to receive(:lxc).with(['config', 'get', 'images.auto_update_interval']).and_return('0')
     end
     it 'will check for appropriate config' do
       expect(@provider.exists?).to be true # rubocop:todo InstanceVariable
@@ -37,8 +37,8 @@ describe Puppet::Type.type(:lxd_config).provider(:config) do
   end
   context 'with setting lxc config' do
     before :each do
-      described_class.expects(:lxc).with(['config', 'get', 'images.auto_update_interval']).returns('\n')
-      described_class.expects(:lxc).with(['config', 'set', 'images.auto_update_interval', 0]).returns('')
+      expect(described_class).to receive(:lxc).with(['config', 'get', 'images.auto_update_interval']).and_return("\n")
+      expect(described_class).to receive(:lxc).with(['config', 'set', 'images.auto_update_interval', 0]).and_return('')
     end
     it 'will create appropriate config' do
       expect(@provider.exists?).to be false # rubocop:todo InstanceVariable

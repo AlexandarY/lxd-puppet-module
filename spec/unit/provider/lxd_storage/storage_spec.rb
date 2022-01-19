@@ -23,7 +23,7 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
 
     context 'without storage-pools' do
       before :each do
-        described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).returns('{}')
+        expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).and_return('{}')
       end
       it 'will check if storage exists' do
         expect(@provider.exists?).to be false # rubocop:todo InstanceVariable
@@ -31,9 +31,7 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
     end
     context 'with storage-pools' do
       before :each do
-        described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).returns(
-          '[ "/1.0/storage-pools/somestorage" ]',
-        )
+        expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).and_return('["/1.0/storage-pools/somestorage"]')
       end
       it 'will check for appropriate output' do
         expect(@provider.exists?).to be true # rubocop:todo InstanceVariable
@@ -41,14 +39,14 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
     end
     context 'with creating storage' do
       before :each do
-        described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).returns('{}')
-        described_class.expects(:lxc).with(
+        expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).and_return('{}')
+        expect(described_class).to receive(:lxc).with(
           [
             'query', '--wait', '-X', 'POST', '-d',
             '{"name":"somestorage","driver":"dir","description":"desc","config":{"source":"/tmp/somestoragepool"}}',
             '/1.0/storage-pools'
           ],
-        ).returns('{}')
+        ).and_return('{}')
       end
       it 'will create appropriate config' do
         expect(@provider.exists?).to be false # rubocop:todo InstanceVariable
@@ -75,8 +73,16 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
 
     context 'with creating storage' do
       before :each do
-        described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).returns('["/1.0/storage-pools/somestorage"]')
-        described_class.expects(:lxc).with(['query', '--wait', '-X', 'DELETE', '/1.0/storage-pools/somestorage']).returns('{}')
+        expect(described_class).to receive(:lxc).with(
+          [
+            'query', '--wait', '-X', 'GET', '/1.0/storage-pools'
+          ],
+        ).and_return('["/1.0/storage-pools/somestorage"]')
+        expect(described_class).to receive(:lxc).with(
+          [
+            'query', '--wait', '-X', 'DELETE', '/1.0/storage-pools/somestorage'
+          ],
+        ).and_return('{}')
       end
       it 'will create appropriate config' do
         expect(@provider.exists?).to be true # rubocop:todo InstanceVariable

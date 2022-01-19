@@ -22,7 +22,7 @@ describe Puppet::Type.type(:lxd_profile).provider(:profile) do
 
   context 'without profiles' do
     before :each do
-      described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/profiles']).returns('{}')
+      expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/profiles']).and_return('{}')
     end
     it 'will check if profile exists' do
       expect(@provider.exists?).to be false # rubocop:todo InstanceVariable
@@ -30,9 +30,7 @@ describe Puppet::Type.type(:lxd_profile).provider(:profile) do
   end
   context 'with profiles' do
     before :each do
-      described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/profiles']).returns(
-        '[ "/1.0/profiles/someprofile" ]',
-      )
+      expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/profiles']).and_return('["/1.0/profiles/someprofile"]')
     end
     it 'will check for appropriate output' do
       expect(@provider.exists?).to be true # rubocop:todo InstanceVariable
@@ -40,8 +38,14 @@ describe Puppet::Type.type(:lxd_profile).provider(:profile) do
   end
   context 'with creating profile' do
     before :each do
-      described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/profiles']).returns('{}')
-      described_class.expects(:lxc).with(['query', '--wait', '-X', 'POST', '-d', '{"name":"someprofile","description":"Some description","config":{},"devices":{}}', '/1.0/profiles']).returns('{}')
+      expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/profiles']).and_return('{}')
+      expect(described_class).to receive(:lxc).with(
+        [
+          'query', '--wait', '-X', 'POST', '-d',
+          '{"name":"someprofile","description":"Some description","config":{},"devices":{}}',
+          '/1.0/profiles'
+        ],
+      ).and_return('{}')
     end
     it 'will create appropriate config' do
       expect(@provider.exists?).to be false # rubocop:todo InstanceVariable

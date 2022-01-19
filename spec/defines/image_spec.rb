@@ -65,7 +65,7 @@ describe 'lxd::image' do
           it do
             is_expected.to contain_lxd_image('debian:buster:amd64:default:container').with(
               'ensure' => 'present',
-              'repo_url' => 'images.linuxcontainers.org'
+              'repo_url' => 'images.linuxcontainers.org',
             )
           end
           it do

@@ -24,7 +24,7 @@ describe Puppet::Type.type(:lxd_container).provider(:container) do
 
   context 'without containers' do
     before :each do
-      described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/containers']).returns('{}')
+      expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/containers']).and_return('{}')
     end
     it 'will check if container exists' do
       expect(@provider.exists?).to be false # rubocop:todo InstanceVariable
@@ -32,7 +32,7 @@ describe Puppet::Type.type(:lxd_container).provider(:container) do
   end
   context 'with lxc config' do
     before :each do
-      described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/containers']).returns('[ "/1.0/containers/container01" ]')
+      expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/containers']).and_return('["/1.0/containers/container01"]')
     end
     it 'will check for appropriate config' do
       expect(@provider.exists?).to be true # rubocop:todo InstanceVariable
@@ -40,15 +40,15 @@ describe Puppet::Type.type(:lxd_container).provider(:container) do
   end
   context 'with setting lxc config' do
     before :each do
-      described_class.expects(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/containers']).returns('{}')
-      described_class.expects(:lxc).with(
-          [
-            'query', '--wait', '-X', 'POST', '-d',
-            '{"name":"container01","architecture":"x86_64","profiles":["default"],"config":{},"devices":{},"source":{"type":"image","alias":"bionic"}}',
-            '/1.0/containers'
-          ],
-        ).returns('{}')
-      described_class.expects(:lxc).with(['query', '--wait', '-X', 'PUT', '-d', '{"action":"start","timeout":30}', '/1.0/containers/container01/state']).returns('{}')
+      expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/containers']).and_return('{}')
+      expect(described_class).to receive(:lxc).with(
+        [
+          'query', '--wait', '-X', 'POST', '-d',
+          '{"name":"container01","architecture":"x86_64","profiles":["default"],"config":{},"devices":{},"source":{"type":"image","alias":"bionic"}}',
+          '/1.0/containers'
+        ],
+      ).and_return('{}')
+      expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'PUT', '-d', '{"action":"start","timeout":30}', '/1.0/containers/container01/state']).and_return('{}')
     end
     it 'will create appropriate config' do
       expect(@provider.exists?).to be false # rubocop:todo InstanceVariable

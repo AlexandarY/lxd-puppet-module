@@ -6,7 +6,7 @@ require 'spec_helper'
 
 describe '::lxd::config' do
   let(:pre_condition) do
-    "class { 'lxd': 
+    "class { 'lxd':
       lxd_core_https_address => '192.168.0.100:8443',
       lxd_core_trust_password => 'sekret',
     }"
