@@ -13,14 +13,14 @@ class lxd::params {
     # additional apt install options
     $install_options = []
     # automatic update of cached images interval
-    $lxd_auto_update_interval = 0
-    $lxd_auto_update_interval_ensure = 'present'
+    $auto_update_interval = 0
+    $auto_update_interval_ensure = 'present'
     # address to for LXD API to listen on eg "[::]:8443"
-    $lxd_core_https_address = undef
-    $lxd_core_https_address_ensure = 'absent'
+    $core_https_address = undef
+    $core_https_address_ensure = 'absent'
     # setting the server's trust password
-    $lxd_core_trust_password = undef
-    $lxd_core_trust_password_ensure = 'absent'
+    $core_trust_password = undef
+    $core_trust_password_ensure = 'absent'
     $lxd_package_provider = 'deb'
-    $lxd_manage_snapd = true
+    $manage_snapd = true
 }
