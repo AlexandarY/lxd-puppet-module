@@ -62,7 +62,7 @@ Puppet::Type.type(:lxd_image).provide(:image) do
   # @param [String]        host        - Host at which to check for full URL paths
   #
   def get_url_paths(image_names, name, arch, variant, host)
-    content = Net::HTTP.get_response(URI.parse("https://#{host}/meta/simplestreams/v1/images.json"))
+    content = Net::HTTP.get_response(URI.parse("https://#{host}/streams/v1/images.json"))
     content_json = JSON.parse(content.body)
 
     result = {}
