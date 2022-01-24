@@ -15,7 +15,7 @@
 #   Description of the storage backend
 #
 define lxd::storage(
-    Hash                      $driver,
+    String                    $driver,
     Hash                      $config,
     String                    $description = '',
     Enum['present', 'absent'] $ensure      = present,
