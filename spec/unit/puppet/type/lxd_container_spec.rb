@@ -5,7 +5,7 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:lxd_container) do
-  [:name, :image].each do |param|
+  [:name, :image, :instance_type].each do |param|
     it "has a #{param} parameter" do
       expect(Puppet::Type.type(:lxd_container).attrtype(param)).to eq(:param)
     end

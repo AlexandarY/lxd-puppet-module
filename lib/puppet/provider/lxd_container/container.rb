@@ -69,6 +69,7 @@ Puppet::Type.type(:lxd_container).provide(:container) do
         'type' => 'image',
         'alias' => resource[:image],
       },
+      'type' => resource[:instance_type]
     }
     create_api_node(['containers'], call_body)
     self.state = resource[:state]

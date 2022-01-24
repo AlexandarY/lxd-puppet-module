@@ -4,39 +4,139 @@
 
 require 'spec_helper'
 
-describe 'lxd::container', :type => 'define' do # rubocop:disable HashSyntax
-  let(:title) { 'container01' }
+describe 'lxd::container' do # rubocop:disable HashSyntax
+  on_supported_os.each do |os, facts|
+    describe "on #{os}" do
+      let(:facts) { facts }
 
-  let(:params) do
-    {
-      'image' => 'bionic'
-    }
-  end
+      describe 'with container' do
+        let(:title) { 'container01' }
+        let(:params) do
+          {
+            'config' => {
+              'limits.memory' => '2048MB'
+            },
+            'profiles' => ['default'],
+            'instance_type' => 'container',
+            'image' => 'debian:buster:amd64:default:container'
+          }
+        end
+        let(:pre_condition) do
+          "
+          lxd::image { 'debian:buster:amd64:default:container':
+            ensure => present
+          }
+          "
+        end
 
-  let(:pre_condition) do
-    "Exec {
-      path => '/usr/bin:/bin:/usr/sbin:/sbin',
-    }
+        context 'when ensure => present' do
+          let(:params) do
+            super().merge(
+              {
+                'ensure' => 'present',
+                'state' => 'started',
+              },
+            )
+          end
 
-    lxd::image { 'bionic':
-      repo_url    => 'http://somerepo.url/lxd-images',
-      image_file  => 'bionicimage.tar.gz',
-      image_alias => 'bionic',
-    }"
-  end
+          it { is_expected.to compile.with_all_deps }
+          it do
+            is_expected.to contain_lxd__container('container01').with(
+              'ensure' => 'present',
+              'state' => 'started',
+              'config' => {
+                'limits.memory' => '2048MB',
+              },
+              'devices' => {},
+              'profiles' => ['default'],
+              'image' => 'debian:buster:amd64:default:container'
+            ).that_requires('Lxd::Image[debian:buster:amd64:default:container]')
+          end
+        end
 
-  context 'ensure present' do
-    it { is_expected.to compile }
-    it do
-      is_expected.to contain_lxd__container('container01').that_requires('Lxd::Image[bionic]')
-    end
-  end
+        context 'when ensure => absent' do
+          let(:params) do
+            super().merge(
+              {
+                'ensure' => 'absent',
+                'state' => 'stopped',
+              },
+            )
+          end
 
-  context 'ensure absent' do
-    let(:params) { super().merge({ 'ensure' => 'absent' }) }
+          it { is_expected.to compile.with_all_deps }
+          it do
+            is_expected.to contain_lxd__container('container01').with(
+              'ensure' => 'absent',
+              'state' => 'stopped',
+            ).that_comes_before('Lxd::Image[debian:buster:amd64:default:container]')
+          end
+        end
+      end
 
-    it do
-      is_expected.to contain_lxd__container('container01').that_comes_before('Lxd::Image[bionic]')
+      describe 'with virtual-machine' do
+        let(:title) { 'vm01' }
+        let(:params) do
+          {
+            'config' => {
+              'limits.memory' => '2048MB'
+            },
+            'profiles' => ['default'],
+            'instance_type' => 'virtual-machine',
+            'image' => 'debian:buster:amd64:default:virtual-machine'
+          }
+        end
+        let(:pre_condition) do
+          "
+          lxd::image { 'debian:buster:amd64:default:virtual-machine':
+            ensure => present
+          }
+          "
+        end
+        context 'when ensure => present' do
+          let(:params) do
+            super().merge(
+              {
+                'ensure' => 'present',
+                'state' => 'started',
+              },
+            )
+          end
+
+          it { is_expected.to compile.with_all_deps }
+          it do
+            is_expected.to contain_lxd__container('vm01').with(
+              'ensure' => 'present',
+              'state' => 'started',
+              'config' => {
+                'limits.memory' => '2048MB',
+              },
+              'devices' => {},
+              'profiles' => ['default'],
+              'image' => 'debian:buster:amd64:default:virtual-machine'
+            ).that_requires('Lxd::Image[debian:buster:amd64:default:virtual-machine]')
+          end
+        end
+
+        context 'when ensure => absent' do
+          let(:params) do
+            super().merge(
+              {
+                'ensure' => 'absent',
+                'state' => 'stopped',
+              },
+            )
+          end
+
+          it { is_expected.to compile.with_all_deps }
+          it do
+            is_expected.to contain_lxd__container('vm01').with(
+              'ensure' => 'absent',
+              'state' => 'stopped',
+            ).that_comes_before('Lxd::Image[debian:buster:amd64:default:virtual-machine]')
+          end
+        end
+      end
     end
   end
 end

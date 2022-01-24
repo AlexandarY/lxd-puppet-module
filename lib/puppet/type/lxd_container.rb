@@ -15,6 +15,10 @@ Puppet::Type.newtype(:lxd_container) do
     desc 'Image for container creation'
   end
 
+  newparam(:instance_type) do
+    desc 'If instance should be a container or a VM'
+  end
+
   newproperty(:config, :hash_matching => :all) do # rubocop:disable HashSyntax
     desc 'Array of config values'
     validate do |value|

@@ -5,6 +5,28 @@
 #
 # @summary Manage LXD container
 #
+# @example Create a new container instance
+#   lxd::container { 'container01':
+#     ensure        => present,
+#     state         => 'started',
+#     config        => {
+#       'limits.memory' => '2048MB'
+#     },
+#     profiles      => ['default'],
+#     instance_type => 'container'
+#   }
+#
+# @example Create a new virtual-machine instance
+#   lxd::container { 'vm01':
+#     ensure        => present,
+#     state         => 'started',
+#     config        => {
+#       'limits.memory' => '2048MB'
+#     },
+#     profiles      => ['default'],
+#     instance_type => 'virtual-machine'
+#   }
+#
 # @param ensure
 #   Ensure the state of the resource
 # @param image
@@ -15,16 +37,19 @@
 #   Devices to be attached to container
 # @param profiles
 #   Profiles to be assigned to container
+# @param instance_type
+#   Type of instance to be created
 # @param state
 #   State of the container
 #
 define lxd::container(
-    String                     $image,
-    Hash                       $config   = {},
-    Hash                       $devices  = {},
-    Array[String]              $profiles = ['default'],
-    Enum['started', 'stopped'] $state    = 'started',
-    Enum['present', 'absent']  $ensure   = present,
+    String                               $image,
+    Hash                                 $config        = {},
+    Hash                                 $devices       = {},
+    Array[String]                        $profiles      = ['default'],
+    Enum['container', 'virtual-machine'] $instance_type = 'container',
+    Enum['started', 'stopped']           $state         = 'started',
+    Enum['present', 'absent']            $ensure        = present,
 ) {
     # creating lxd container
 
