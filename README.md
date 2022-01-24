@@ -61,12 +61,64 @@ class { 'lxd':
   ensure                      => present,
   auto_update_interval        => 6,
   auto_update_interval_ensure => present,
-  core_https_addres           => '192.168.0.100:8443',
+  core_https_addres           => '192.168.0.10:8443',
   core_https_address_ensure   => present,
   core_trust_password         => 'sekret',
-  core_trust_password_ensure  => present
+  core_trust_password_ensure  => present,
+  lxd_package_provider        => 'snap',
+  manage_snapd                => true
 }
 ```
+
+The class also supports setting up a node as either an initial cluster node or join
+it to an existing cluster.
+
+Example for initial cluster node setup:
+
+```
+class { 'lxd':
+  ensure                      => present,
+  auto_update_interval        => 6,
+  auto_update_interval_ensure => present,
+  core_https_addres           => '192.168.0.10:8443',
+  core_https_address_ensure   => present,
+  core_trust_password         => 'sekret',
+  core_trust_password_ensure  => present,
+  lxd_package_provider        => 'snap',
+  manage_snapd                => true,
+  member_name                 => 'member01',
+  join_member                 => '192.168.0.10:8443',
+  members                     => {
+    'member01' => {
+        'ensure'  => 'present',
+        'address' => '192.168.0.10:8443',
+        'enabled' => true
+    },
+    'member02' => {
+        'ensure' => 'present',
+        'address' => '192.168.0.11:8443',
+        'enabled' => true
+    },
+    'member03' => {
+        'ensure' => 'present',
+        'address' => '192.168.0.12:8443',
+        'enabled' => true
+    }
+  }
+}
+```
+
+When setting up a cluster or joining a cluster, the following vars are most important:
+
+ * `cluster_enable` - if the node is to create/join cluster
+ * `member_name` - Each node part of a cluster is indetified by name.
+ This is where you can set it.
+ * `members` - All members that are part of the cluster, including this node.
+ * `join_member` - The initial leader of the cluster. Will be used by new nodes
+ to connect and request cluster join.
+ * `cluster_trust_password` - Password trusted by all members of a cluster.
+
+See `examples/cluster.pp` for an exact example on how to setup a cluster.
 
 ## Defines
 
