@@ -163,6 +163,155 @@ describe 'lxd' do
           end
         end
       end
+
+      describe 'on a cluster node setup' do
+        let(:params) do
+          {
+            'core_https_address' => '192.168.0.10:8443',
+            'core_https_address_ensure' => 'present',
+            'core_trust_password' => 'sekret',
+            'core_trust_password_ensure' => 'present',
+            'cluster_enable' => true,
+            'cluster_member_name' => 'member01',
+            'cluster_trust_password' => 'sekret',
+            'cluster_join_member' => '192.168.0.10:8443'
+          }
+        end
+
+        context 'with ensure => present' do
+          let(:params) do
+            super().merge(
+              {
+                'ensure' => 'present',
+                'cluster_members' => {
+                  'member01' => {
+                    'ensure'  => 'present',
+                    'enabled' => true,
+                    'address' => '192.168.0.10:8443'
+                  },
+                  'member02' => {
+                    'ensure'  => 'present',
+                    'enabled' => true,
+                    'address' => '192.168.0.11:8443'
+                  },
+                  'member03' => {
+                    'ensure'  => 'present',
+                    'enabled' => true,
+                    'address' => '192.168.0.12:8443'
+                  }
+                }
+              },
+            )
+          end
+
+          it { is_expected.to compile.with_all_deps }
+          it do
+            is_expected.to contain_class('lxd::cluster').with(
+              'member_name' => 'member01',
+              'members' => {
+                'member01' => {
+                  'ensure'  => 'present',
+                  'enabled' => true,
+                  'address' => '192.168.0.10:8443'
+                },
+                'member02' => {
+                  'ensure'  => 'present',
+                  'enabled' => true,
+                  'address' => '192.168.0.11:8443'
+                },
+                'member03' => {
+                  'ensure'  => 'present',
+                  'enabled' => true,
+                  'address' => '192.168.0.12:8443'
+                }
+              },
+              'join_member' => '192.168.0.10:8443',
+              'cluster_password' => 'sekret',
+            ).that_requires(
+              [
+                'Class[lxd::config]',
+                'Class[lxd::install]',
+              ],
+            )
+          end
+          it do
+            is_expected.to contain_lxd_cluster_member('member01').with(
+              'ensure' => 'present',
+              'enabled' => true,
+              'address' => '192.168.0.10:8443',
+              'join_member' => '192.168.0.10:8443',
+              'other_members' => ['192.168.0.11:8443', '192.168.0.12:8443'],
+            ).that_requires(
+              [
+                'Class[lxd::config]',
+                'Class[lxd::install]',
+              ],
+            )
+          end
+        end
+
+        context 'with ensure => absent' do
+          let(:params) do
+            super().merge(
+              {
+                'ensure' => 'absent',
+                'cluster_members' => {
+                  'member01' => {
+                    'ensure'  => 'absent',
+                    'enabled' => false,
+                    'address' => '192.168.0.10:8443'
+                  },
+                  'member02' => {
+                    'ensure'  => 'absent',
+                    'enabled' => false,
+                    'address' => '192.168.0.11:8443'
+                  },
+                  'member03' => {
+                    'ensure'  => 'absent',
+                    'enabled' => false,
+                    'address' => '192.168.0.12:8443'
+                  }
+                }
+              },
+            )
+          end
+
+          it { is_expected.to compile.with_all_deps }
+          it do
+            is_expected.to contain_class('lxd::cluster').with(
+              'member_name' => 'member01',
+              'members' => {
+                'member01' => {
+                  'ensure'  => 'absent',
+                  'enabled' => false,
+                  'address' => '192.168.0.10:8443'
+                },
+                'member02' => {
+                  'ensure'  => 'absent',
+                  'enabled' => false,
+                  'address' => '192.168.0.11:8443'
+                },
+                'member03' => {
+                  'ensure'  => 'absent',
+                  'enabled' => false,
+                  'address' => '192.168.0.12:8443'
+                }
+              },
+              'join_member' => '192.168.0.10:8443',
+              'cluster_password' => 'sekret',
+            ).that_requires('Class[lxd::config]')
+          end
+          it do
+            is_expected.to contain_lxd_cluster_member('member01').with(
+              'ensure' => 'absent',
+              'enabled' => false,
+              'address' => '192.168.0.10:8443',
+              'join_member' => '192.168.0.10:8443',
+              'other_members' => ['192.168.0.11:8443', '192.168.0.12:8443'],
+            )
+          end
+        end
+      end
     end
   end
 end

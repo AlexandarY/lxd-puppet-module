@@ -23,4 +23,9 @@ class lxd::params {
     $core_trust_password_ensure = 'absent'
     $lxd_package_provider = 'deb'
     $manage_snapd = true
+    $cluster_enable = false
+    $cluster_member_name = undef
+    $cluster_trust_password = undef
+    $cluster_join_member = undef
+    $cluster_members = {}
 }
