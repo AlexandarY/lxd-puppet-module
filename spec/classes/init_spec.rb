@@ -241,6 +241,7 @@ describe 'lxd' do
               'address' => '192.168.0.10:8443',
               'join_member' => '192.168.0.10:8443',
               'other_members' => ['192.168.0.11:8443', '192.168.0.12:8443'],
+              'cluster_password' => 'sekret',
             ).that_requires(
               [
                 'Class[lxd::config]',
@@ -307,6 +308,7 @@ describe 'lxd' do
               'enabled' => false,
               'address' => '192.168.0.10:8443',
               'join_member' => '192.168.0.10:8443',
+              'cluster_password' => 'sekret',
               'other_members' => ['192.168.0.11:8443', '192.168.0.12:8443'],
             )
           end

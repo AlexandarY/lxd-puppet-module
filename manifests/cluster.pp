@@ -37,10 +37,11 @@ class lxd::cluster (
   }
 
   lxd_cluster_member { $member_name:
-    ensure        => $current_member['ensure'],
-    enabled       => $current_member['enabled'],
-    address       => $current_member['address'],
-    join_member   => $join_member,
-    other_members => $other_members
+    ensure           => $current_member['ensure'],
+    enabled          => $current_member['enabled'],
+    address          => $current_member['address'],
+    cluster_password => $cluster_password,
+    join_member      => $join_member,
+    other_members    => $other_members
   }
 }
