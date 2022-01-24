@@ -126,6 +126,212 @@ describe Puppet::Type.type(:lxd_cluster_member).provider(:cluster_member) do
         end
       end
     end
+
+    describe '.destroy' do
+      context 'when successful' do
+        before(:each) do
+          expect(described_class).to receive(:lxc).twice.with(['query', '--wait', '-X', 'GET', '/1.0/cluster']).and_return(
+            '{
+              "enabled": true,
+              "member_config": [],
+              "server_name": "member01"
+            }',
+          )
+          expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/cluster/members']).and_return(
+            '[ "/1.0/cluster/members/member01", "/1.0/cluster/members/member02", "/1.0/cluster/members/member03" ]',
+          )
+          expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'DELETE', '/1.0/cluster/members/member01']).and_return('\n')
+        end
+        it 'raises no errors' do
+          expect(@provider.exists?).to be true # rubocop:todo InstanceVariable
+          expect { @provider.destroy }.not_to raise_error # rubocop:todo InstanceVariable
+        end
+      end
+      context 'when it fails' do
+        before(:each) do
+          expect(described_class).to receive(:lxc).twice.with(['query', '--wait', '-X', 'GET', '/1.0/cluster']).and_return(
+            '{
+              "enabled": true,
+              "member_config": [],
+              "server_name": "member01"
+            }',
+          )
+          expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/cluster/members']).and_return(
+            '[ "/1.0/cluster/members/member01", "/1.0/cluster/members/member02", "/1.0/cluster/members/member03" ]',
+          )
+          expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'DELETE', '/1.0/cluster/members/member01']).and_return(
+            'Error: Some unknown error occurred example',
+          )
+        end
+        it 'raises puppet::error' do
+          expect(@provider.exists?).to be true # rubocop:todo InstanceVariable
+          expect { @provider.destroy }.to raise_error %r{Error encountered while leaving cluster} # rubocop:todo InstanceVariable
+        end
+      end
+      context 'when last member' do
+        before(:each) do
+          expect(described_class).to receive(:lxc).twice.with(['query', '--wait', '-X', 'GET', '/1.0/cluster']).and_return(
+            '{
+              "enabled": true,
+              "member_config": [],
+              "server_name": "member01"
+            }',
+          )
+          expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/cluster/members']).and_return(
+            '[ "/1.0/cluster/members/member01" ]',
+          )
+        end
+        it 'will not run `leave_cluster` and not raise error' do
+          expect(@provider.exists?).to be true # rubocop:todo InstanceVariable
+          expect { @provider.destroy }.not_to raise_error # rubocop:todo InstanceVariable
+        end
+      end
+    end
+
+    describe '.enabled' do
+      context 'when disabled and want enable' do
+        before(:each) do
+          expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/cluster/members/member01']).and_return(
+            '{
+              "architecture": "x86_64",
+              "config": {},
+              "database": true,
+              "description": "",
+              "failure_domain": "default",
+              "groups": [
+                  "default"
+              ],
+              "message": "Unavailable due to maintenance",
+              "roles": [
+                  "database-leader",
+                  "database"
+              ],
+              "server_name": "member01",
+              "status": "Evacuated",
+              "url": "https://192.168.0.10:8443"
+            }',
+          )
+          expect(described_class).to receive(:lxc).with(
+            [
+              'query', '--wait', '-X', 'POST', '--data',
+              '{"action":"restore"}', '/1.0/cluster/members/member01/state'
+            ],
+          ).and_return(
+            '{
+              "class": "task",
+              "created_at": "2022-01-24T14:20:15.333422606Z",
+              "description": "Restoring cluster member",
+              "err": "",
+              "id": "59d26d8b-168f-49a9-b1f8-463dae44f2bd",
+              "location": "member01",
+              "may_cancel": false,
+              "metadata": null,
+              "resources": null,
+              "status": "Success",
+              "status_code": 200,
+              "updated_at": "2022-01-24T14:20:15.333422606Z"
+            }',
+          )
+          expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/cluster/members/member01']).and_return(
+            '{
+             "architecture": "x86_64",
+              "config": {},
+              "database": true,
+              "description": "",
+              "failure_domain": "default",
+              "groups": [
+                      "default"
+              ],
+              "message": "Fully operational",
+              "roles": [
+                      "database-leader",
+                      "database"
+              ],
+              "server_name": "clbt04",
+              "status": "Online",
+              "url": "https://192.168.0.10:8443"
+            }',
+          )
+        end
+        it 'without errors' do
+          expect(@provider.enabled).to be false # rubocop:todo InstanceVariable
+          expect { @provider.enabled = true }.not_to raise_error # rubocop:todo InstanceVariable
+          expect(@provider.enabled).to be true # rubocop:todo InstanceVariable
+        end
+      end
+
+      context 'when enabled and want disable' do
+        before(:each) do
+          expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/cluster/members/member01']).and_return(
+            '{
+              "architecture": "x86_64",
+              "config": {},
+              "database": true,
+              "description": "",
+              "failure_domain": "default",
+              "groups": [
+                      "default"
+              ],
+              "message": "Fully operational",
+              "roles": [
+                      "database-leader",
+                      "database"
+              ],
+              "server_name": "member01",
+              "status": "Online",
+              "url": "https://192.168.0.10:8443"
+            }',
+          )
+          expect(described_class).to receive(:lxc).with(
+            [
+              'query', '--wait', '-X', 'POST', '--data',
+              '{"action":"evacuate"}', '/1.0/cluster/members/member01/state'
+            ],
+          ).and_return(
+            '{
+              "class": "task",
+              "created_at": "2022-01-24T14:16:22.421543415Z",
+              "description": "Evacuating cluster member",
+              "err": "",
+              "id": "691c1e47-7fc4-47c6-9d6c-50c6acf9777e",
+              "location": "member01",
+              "may_cancel": false,
+              "metadata": null,
+              "resources": null,
+              "status": "Success",
+              "status_code": 200,
+              "updated_at": "2022-01-24T14:16:22.421543415Z"
+            }',
+          )
+          expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/cluster/members/member01']).and_return(
+            '{
+              "architecture": "x86_64",
+              "config": {},
+              "database": true,
+              "description": "",
+              "failure_domain": "default",
+              "groups": [
+                      "default"
+              ],
+              "message": "Unavailable due to maintenance",
+              "roles": [
+                      "database-leader",
+                      "database"
+              ],
+              "server_name": "member01",
+              "status": "Evacuated",
+              "url": "https://192.168.0.10:8443"
+            }',
+          )
+        end
+
+        it 'without errors' do
+          expect(@provider.enabled).to be true # rubocop:todo InstanceVariable
+          expect { @provider.enabled = false }.not_to raise_error # rubocop:todo InstanceVariable
+          expect(@provider.enabled).to be false # rubocop:todo InstanceVariable
+        end
+      end
+    end
   end
 
   describe 'on new member joining cluster' do

@@ -73,6 +73,34 @@ Puppet::Type.type(:lxd_cluster_member).provide(:cluster_member) do
     end
   end
 
+  # Check if the server is the last member of the cluster
+  # If it is, when attempting to leave LXD will throw an error:
+  # Error: Member is the only member in the cluster
+  #
+  def last_member?
+    begin # rubocop:todo RedundantBegin
+      response = JSON.parse(lxc(['query', '--wait', '-X', 'GET', '/1.0/cluster/members']))
+
+      if response.length > 1
+        false
+      else
+        true
+      end
+    rescue JSON::ParserError => err
+      raise Puppet::Error, "Error while checking cluster members - #{err} - #{response}"
+    end
+  end
+
+  # Leave a cluster
+  #
+  # @param [String] server_name - Name of the member to remove
+  #
+  def leave_cluster(server_name)
+    response = lxc(['query', '--wait', '-X', 'DELETE', "/1.0/cluster/members/#{server_name}"])
+
+    raise Puppet::Error, "Error encountered while leaving cluster - #{response}" unless response == '\n'
+  end
+
   ### Provider methods
 
   # checking if the resource exists
@@ -96,6 +124,44 @@ Puppet::Type.type(:lxd_cluster_member).provide(:cluster_member) do
 
   # ensure absent handling
   def destroy
-    # TODO
+    leave_cluster(resource[:name]) unless part_of_cluster? && last_member?
+  end
+
+  # handle retrieval of enabled property value
+  def enabled
+    begin # rubocop:todo RedundantBegin
+      response = JSON.parse(lxc(['query', '--wait', '-X', 'GET', "/1.0/cluster/members/#{resource[:name]}"]))
+
+      if response['status'] == 'Evacuated'
+        false
+      elsif response['status'] == 'Online'
+        true
+      else
+        raise Puppet::Error, "Unknonw lxc cluster node state - #{response}"
+      end
+    rescue JSON::ParserError => err
+      raise Puppet::Error, "Error while retrieving node state - #{err} - #{response}"
+    end
+  end
+
+  # handle setting enabled property value
+  def enabled=(state)
+    action = if state
+               'restore'
+             else
+               'evacuate'
+             end
+
+    begin
+      params = { 'action' => action }
+      response = JSON.parse(lxc(
+        [
+          'query', '--wait', '-X', 'POST', '--data', "#{params.to_json}", # rubocop:todo RedundantInterpolation
+          "/1.0/cluster/members/#{resource[:name]}/state"
+        ],
+      ))
+    rescue JSON::ParserError => err
+      rase Puppet::Error, "Error setting node state - #{err} - #{response}"
+    end
   end
 end
