@@ -30,7 +30,7 @@ class lxd::install {
       exec { 'remove lxd':
         path    => '/bin:/usr/bin',
         command => '/usr/bin/snap remove lxd',
-        unless  => '! /usr/bin/snap list lxd >/dev/null 2>&1',
+        unless  => 'test ! /usr/bin/snap list lxd >/dev/null 2>&1',
       }
     }
 
