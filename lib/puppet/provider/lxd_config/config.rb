@@ -39,6 +39,12 @@ Puppet::Type.type(:lxd_config).provide(:config) do
   def should_update?(config_name, config_value, force)
     current_value = get_lxd_config_value(config_name)
 
+    # In some cases `current_value` will be nil, which for logic below
+    # would equal .empty? . Adjust it to avoid undef method on nil class
+    if current_value.nil?
+      current_value = ''
+    end
+
     # when the trust_password is set, it will only return 'true'.
     # this causes a constant set of value
     if config_name.join('').include? 'trust_password' and current_value == 'true' and !force
