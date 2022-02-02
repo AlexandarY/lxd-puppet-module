@@ -36,6 +36,22 @@ Puppet::Type.type(:lxd_config).provide(:config) do
     end
   end
 
+  def should_update?(config_name, config_value, force)
+    current_value = get_lxd_config_value(config_name)
+
+    # when the trust_password is set, it will only return 'true'.
+    # this causes a constant set of value
+    if config_name.join('').include? 'trust_password' and current_value == 'true' and !force
+      return config_value
+    end
+
+    if config_name.join('').include? 'auto_update_interval' and current_value.empty? and !force
+      return config_value
+    end
+
+    return current_value
+  end
+
   # checking if the resource exists
   def exists?
     get_lxd_config_value(resource[:config]) != nil
@@ -53,7 +69,7 @@ Puppet::Type.type(:lxd_config).provide(:config) do
 
   # getter method for getting config value
   def value
-    get_lxd_config_value(resource[:config])
+    should_update?(resource[:config], resource[:value], resource[:force])
   end
 
   # setter method for setting config value

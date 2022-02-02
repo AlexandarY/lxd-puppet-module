@@ -5,7 +5,7 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:lxd_config) do
-  [:config_name, :config].each do |param|
+  [:config_name, :config, :force].each do |param|
     it "does not have a #{param} parameter" do
       expect(Puppet::Type.type(:lxd_config).attrtype(param)).to eq(:param)
     end

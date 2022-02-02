@@ -15,6 +15,11 @@ Puppet::Type.newtype(:lxd_config) do
     desc 'Array of config which needs to be passed to lxc config'
   end
 
+  newparam(:force) do
+    desc 'Force change of value, even if current could be the same'
+    defaultto false
+  end
+
   newproperty(:value) do
     desc 'Values that needs to be set in lxc config'
   end
