@@ -53,7 +53,7 @@ describe Puppet::Type.type(:lxd_config).provider(:config) do
   describe '.destroy' do
     context 'with value set' do
       before :each do
-        expect(described_class).to receive(:lxc).with(['config', 'get', 'images.auto_update_interval']).and_return("0")
+        expect(described_class).to receive(:lxc).with(['config', 'get', 'images.auto_update_interval']).and_return('0')
         expect(described_class).to receive(:lxc).with(['config', 'unset', 'images.auto_update_interval']).and_return('')
       end
       it 'will unset is successfully' do
@@ -68,7 +68,7 @@ describe Puppet::Type.type(:lxd_config).provider(:config) do
         expect(described_class).to receive(:lxc).with(['config', 'get', 'images.auto_update_interval']).and_return('0')
       end
       it 'will return expected value' do
-        expect(@provider.value).to eq '0'
+        expect(@provider.value).to eq '0' # rubocop:todo InstanceVariable
       end
     end
     context 'when value is to be set' do
@@ -77,8 +77,8 @@ describe Puppet::Type.type(:lxd_config).provider(:config) do
         expect(described_class).to receive(:lxc).with(['config', 'set', 'images.auto_update_interval', 0]).and_return('')
       end
       it 'will change successfully' do
-        expect(@provider.value).to eq '6'
-        expect(@provider.value=0).to eq 0
+        expect(@provider.value).to eq '6' # rubocop:todo InstanceVariable
+        expect(@provider.value = 0).to eq 0 # rubocop:todo InstanceVariable
       end
     end
     context 'when value is different, but should not change' do
@@ -98,7 +98,7 @@ describe Puppet::Type.type(:lxd_config).provider(:config) do
         expect(described_class).to receive(:lxc).with(['config', 'get', 'images.auto_update_interval']).and_return('')
       end
       it 'will not trigger change' do
-        expect(@provider.value).to eq 6
+        expect(@provider.value).to eq 6 # rubocop:todo InstanceVariable
       end
     end
     context 'when value change is forced' do
@@ -118,7 +118,7 @@ describe Puppet::Type.type(:lxd_config).provider(:config) do
         expect(described_class).to receive(:lxc).with(['config', 'get', 'images.auto_update_interval']).and_return('')
       end
       it 'will trigger change' do
-        expect(@provider.value).to eq ''
+        expect(@provider.value).to eq '' # rubocop:todo InstanceVariable
       end
     end
     context 'when core.trust_password is set, but should not change' do
@@ -138,7 +138,7 @@ describe Puppet::Type.type(:lxd_config).provider(:config) do
         expect(described_class).to receive(:lxc).with(['config', 'get', 'core.trust_password']).and_return('true')
       end
       it 'will not trigger change' do
-        expect(@provider.value).to eq 'sekret'
+        expect(@provider.value).to eq 'sekret' # rubocop:todo InstanceVariable
       end
     end
   end

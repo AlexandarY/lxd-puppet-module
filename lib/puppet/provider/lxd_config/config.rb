@@ -6,6 +6,9 @@ Puppet::Type.type(:lxd_config).provide(:config) do
   commands :lxc => 'lxc' # rubocop:disable HashSyntax
 
   # custom function that will get config values
+  #
+  # @param config_array [Array[String]] values to be set
+  # @return [String, nil] the current value for `config_array` option
   def get_lxd_config_value(config_array)
     begin
       output = lxc(['config', 'get', config_array].flatten)
@@ -17,6 +20,9 @@ Puppet::Type.type(:lxd_config).provide(:config) do
   end
 
   # custom function that will set config values
+  #
+  # @param config_array [Array[String]] values to be set
+  # @param config_value [String] the new value to be set for the config options
   def set_lxd_config_value(config_array, config_value)
     begin # rubocop:todo RedundantBegin
       output = lxc(['config', 'set', config_array, config_value].flatten) # rubocop:todo UselessAssignment
@@ -27,6 +33,8 @@ Puppet::Type.type(:lxd_config).provide(:config) do
   end
 
   # custom function that will unset config values
+  #
+  # @param config_array [Array[String]] values to be set
   def unset_lxd_config_value(config_array)
     begin # rubocop:todo RedundantBegin
       output = lxc(['config', 'unset', config_array].flatten!) # rubocop:todo UselessAssignment
@@ -36,6 +44,14 @@ Puppet::Type.type(:lxd_config).provide(:config) do
     end
   end
 
+  # Determines if the current value requires change
+  # This method is required as some config settings ones set, do not
+  # indicate what the value was (core.trust_password) or return as nil (images.auto_update_interval)
+  #
+  # @param config_name [String] name of the lxc config option to check
+  # @param config_value [String] the value to be changed with (if required)
+  # @param force [Boolean] if the change is required, even if the value might be the same
+  # @return [String] the value for `config_name`
   def should_update?(config_name, config_value, force)
     current_value = get_lxd_config_value(config_name)
 
@@ -47,15 +63,15 @@ Puppet::Type.type(:lxd_config).provide(:config) do
 
     # when the trust_password is set, it will only return 'true'.
     # this causes a constant set of value
-    if config_name.join('').include? 'trust_password' and current_value == 'true' and !force
+    if config_name.join('').include?('trust_password') && current_value == 'true' && !force
       return config_value
     end
 
-    if config_name.join('').include? 'auto_update_interval' and current_value.empty? and !force
+    if config_name.join('').include?('auto_update_interval') && current_value.empty? && !force
       return config_value
     end
 
-    return current_value
+    current_value
   end
 
   # checking if the resource exists
