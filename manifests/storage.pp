@@ -13,17 +13,21 @@
 #   Config values for the storage
 # @param description
 #   Description of the storage backend
+# @param source
+#   Path to block device or loop file or filesystem entry
 #
 define lxd::storage(
     String                    $driver,
-    Hash                      $config,
-    String                    $description = '',
+    Hash                      $config      = {},
+    String                    $description = 'Managed by Puppet',
+    Optional[String]          $source      = undef,
     Enum['present', 'absent'] $ensure      = present,
 ) {
     lxd_storage { $name:
         ensure      => $ensure,
         driver      => $driver,
         config      => $config,
+        source      => $source,
         description => $description,
     }
 }
