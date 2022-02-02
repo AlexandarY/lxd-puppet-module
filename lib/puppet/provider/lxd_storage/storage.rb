@@ -5,49 +5,57 @@
 require 'json'
 
 Puppet::Type.type(:lxd_storage).provide(:storage) do
-  commands :lxc => 'lxc' # rubocop:disable HashSyntax
+  commands lxc: 'lxc'
 
   ### Helper methods
 
-  # returns correct path to API
-  def return_api_path(array)
-    "/1.0/#{array.join('/')}"
+  # Retrieve all existing storage-pools
+  #
+  # @return Array[String] names of existing storage pools
+  def get_storage_pools
+    begin # rubocop:disable RedundantBegin
+      response = JSON.parse(lxc(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']))
+      response
+    rescue JSON::ParserError => err
+      raise Puppet::Error, "Error while retrieving storage-pools - #{err} - #{response}"
+    end
   end
 
-  # GET call to API that take type, name arguments but can also take more
-  def get_api_node(path_array)
-    JSON.parse(lxc(['query', '--wait', '-X', 'GET', return_api_path(path_array)]))
+  # Retrieve single storage pool
+  #
+  # @param name [String] name of the storage pool
+  def get_storage_pool(name)
+    begin # rubocop:disable RedundantBegin
+      response = JSON.parse(lxc(['query', '--wait', '-X', 'GET', "/1.0/storage-pools/#{name}"]))
+      response
+    rescue JSON::ParserError => err
+      raise Puppet::Error, "Error while retreiving storage-pool #{name} - #{err} - #{response}"
+    end
   end
 
-  # LXD api can return '' empty string which cannot be parsed as JSON
-  def parse_api_output(output)
-    response = if output.empty?
-                 {}
-               else
-                 JSON.parse(output)
-               end
-    response
+  # Create a new storage-pool
+  #
+  # @param request_data [Hash] Data for Storage Pool API request
+  # @return [nil]
+  def create_storage_pool(request_data)
+    lxc(['query', '--wait', '-X', 'POST', '-d', request_data.to_json, '/1.0/storage-pools'])
   end
 
-  # POST call
-  def create_api_node(path_array, values_hash)
-    parse_api_output(lxc(['query', '--wait', '-X', 'POST', '-d', "#{values_hash.to_json}", return_api_path(path_array)])) # rubocop:todo RedundantInterpolation
+  # Edit an existing storage-pool
+  #
+  # @param pool_name [String] Name of the storage-pool to update
+  # @param body [Hash] Values to be updated in storage-pool data
+  # @return [nil]
+  def update_existing_storage_pool(pool_name, body)
+    lxc(['query', '--wait', '-X', 'PATCH', '-d', body.to_json, "/1.0/storage-pools/#{pool_name}"])
   end
 
-  # PUT call
-  def put_api_node(path_array, values_hash)
-    parse_api_output(lxc(['query', '--wait', '-X', 'PUT', '-d', "#{values_hash.to_json}", return_api_path(path_array)])) # rubocop:todo RedundantInterpolation
-  end
-
-  # PATCH call
-  def modify_api_node(path_array, values_hash)
-    lxc(['query', '--wait', '-X', 'PATCH', '-d', "#{values_hash.to_json}", return_api_path(path_array)]) # rubocop:todo RedundantInterpolation
-    true
-  end
-
-  # DELETE call
-  def delete_api_node(path_array)
-    parse_api_output(lxc(['query', '--wait', '-X', 'DELETE', return_api_path(path_array)]))
+  # Delete an existing storage-pool
+  #
+  # @param pool_name [String] name of the pool to be deleted
+  # @return [nil]
+  def delete_storage_pool(pool_name)
+    lxc(['query', '--wait', '-X', 'DELETE', "/1.0/storage-pools/#{pool_name}"])
   end
 
   ### Provider methods
@@ -56,13 +64,13 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
   def exists?
     # if the entry '/storage-pools/somename' is present within array returned from /storage-pools
     # then the storage pool somename exists
-    storage_array = get_api_node(['storage-pools'])
-    storage_array.include? return_api_path(['storage-pools', resource[:name]])
+    storage_pools = get_storage_pools
+    storage_pools.join(',').include? resource[:name]
   end
 
   # ensure absent handling
   def destroy
-    delete_api_node(['storage-pools', resource[:name]])
+    delete_storage_pool(resource[:name])
   end
 
   # ensure present handling
@@ -73,42 +81,53 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
       'description' => resource[:description],
       'config' => resource[:config],
     }
-    create_api_node(['storage-pools'], call_body)
+
+    # If source is specified, add it to the create request
+    unless resource[:source].empty?
+      call_body['config'][:soruce] = resource[:source]
+    end
+
+    create_storage_pool(call_body)
   end
 
   # getter method for property config
   def config
-    storage_hash = get_api_node(['storage-pools', resource[:name]])
-    config_hash = storage_hash['config']
+    storage_info = get_storage_pool(resource[:name])
+    config_hash = storage_info['config']
     # Remove volatile.initial_source key from config as
     config_hash.delete('volatile.initial_source')
+    # Remove 'source' from config as adjusting it on an
+    # existing storage-pool is dangerous
+    config_hash.delete('source')
     config_hash
   end
 
   # setter method for property config
   def config=(config_hash)
-    _storage_hash = get_api_node(['storage-pools', resource[:name]])
     call_body = {
       'config' => config_hash,
     }
-    put_api_node(['storage-pools', resource[:name]], call_body)
+    update_existing_storage_pool(resource[:name], call_body)
   end
 
   # getter method for property description
   def description
-    storage_hash = get_api_node(['storage-pools', resource[:name]])
-    desc = storage_hash['description']
+    response = get_storage_pool(resource[:name])
+    desc = response['description']
     desc
   end
 
   # setter method for property description
   def description=(desc)
-    modify_api_node(['storage-pools', resource[:name]], { 'description' => desc })
+    call_body = {
+      'description' => desc
+    }
+    update_existing_storage_pool(resource[:name], call_body)
   end
 
   # getter method for property driver
   def driver
-    storage_hash = get_api_node(['storage-pools', resource[:name]])
+    storage_hash = get_storage_pool(resource[:name])
     driver = storage_hash['driver']
     driver
   end

@@ -5,7 +5,7 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:lxd_storage) do
-  [:name].each do |param|
+  [:name, :source].each do |param|
     it "has a #{param} parameter" do
       expect(Puppet::Type.type(:lxd_storage).attrtype(param)).to eq(:param)
     end
@@ -16,16 +16,18 @@ describe Puppet::Type.type(:lxd_storage) do
       expect(Puppet::Type.type(:lxd_storage).attrtype(prop)).to eq(:property)
     end
   end
-  describe 'driver' do
-    it 'checks if driver has some sane values' do
-      expect(
+  describe 'dir storage pool' do
+    it 'is valid' do
+      expect {
         described_class.new(
-          name:    'some',
+          name: 'default-dir',
           driver: 'dir',
-          description: 'Some desc',
-          config: {},
-        )[:driver],
-      ).to include('dir')
+          description: 'Default dir pool',
+          config: {
+            'volume.size' => '1GiB'
+          },
+        )
+      }.not_to raise_error
     end
   end
 end

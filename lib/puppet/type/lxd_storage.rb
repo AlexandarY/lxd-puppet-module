@@ -11,8 +11,18 @@ Puppet::Type.newtype(:lxd_storage) do
     desc 'Unique name of the profile'
   end
 
+  newparam(:source) do
+    desc 'Path to block device or loop file or filesystem entry'
+    defaultto ''
+  end
+
   newproperty(:driver) do
     desc 'Backend storage driver'
+    validate do |value|
+      unless ['dir', 'ceph', 'cephfs', 'btfs', 'lvm', 'zfs'].include? value
+        raise ArgumentError, "unknown value for 'driver' = #{value}"
+      end
+    end
   end
 
   newproperty(:description) do

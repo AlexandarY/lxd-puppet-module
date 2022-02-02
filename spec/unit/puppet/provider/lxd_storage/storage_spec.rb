@@ -5,88 +5,183 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:lxd_storage).provider(:storage) do
-  context 'with ensure present' do
-    before(:each) do
-      @resource = Puppet::Type.type(:lxd_storage).new(
-        {
-          # rubocop:disable HashSyntax
-          :ensure      => 'present',
-          :name        => 'somestorage',
-          :driver      => 'dir',
-          :description => 'desc',
-          :config      => { 'source' => '/tmp/somestoragepool' },
-          # rubocop:enable HashSyntax
-        },
-      )
-      @provider = described_class.new(@resource) # rubocop:todo InstanceVariable
-    end
+  let(:params) do
+    {
+      title: 'default-storage',
+      name: 'default-storage',
+      driver: 'dir',
+      description: 'default storage driver',
+      config: { 'volume.size' => '1GiB' },
+      provider: described_class.name,
+    }
+  end
+  let(:resource) do
+    Puppet::Type.type(:lxd_storage).new(params)
+  end
+  let(:provider) do
+    resource.provider
+  end
 
-    context 'without storage-pools' do
-      before :each do
-        expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).and_return('{}')
+  describe '.exists?' do
+    context 'when not existing' do
+      before(:each) do
+        expect(provider).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).and_return('[]')
       end
-      it 'will check if storage exists' do
-        expect(@provider.exists?).to be false # rubocop:todo InstanceVariable
-      end
-    end
-    context 'with storage-pools' do
-      before :each do
-        expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).and_return('["/1.0/storage-pools/somestorage"]')
-      end
-      it 'will check for appropriate output' do
-        expect(@provider.exists?).to be true # rubocop:todo InstanceVariable
+      it 'will return false' do
+        expect(provider.exists?).to be false
       end
     end
-    context 'with creating storage' do
-      before :each do
-        expect(described_class).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']).and_return('{}')
-        expect(described_class).to receive(:lxc).with(
+    context 'when existing' do
+      before(:each) do
+        expect(provider).to receive(:lxc).with(
           [
-            'query', '--wait', '-X', 'POST', '-d',
-            '{"name":"somestorage","driver":"dir","description":"desc","config":{"source":"/tmp/somestoragepool"}}',
-            '/1.0/storage-pools'
+            'query', '--wait', '-X', 'GET', '/1.0/storage-pools'
           ],
-        ).and_return('{}')
+        ).and_return('["/1.0/storage-pools/default-storage"]')
       end
-      it 'will create appropriate config' do
-        expect(@provider.exists?).to be false # rubocop:todo InstanceVariable
-        expect(@provider.create).to eq({}) # rubocop:todo InstanceVariable
+      it 'will return true' do
+        expect(provider.exists?).to be true
       end
     end
   end
 
-  context 'with ensure absent' do
-    before(:each) do
-      @resource = Puppet::Type.type(:lxd_storage).new(
-        {
-          # rubocop:disable HashSyntax
-          :ensure      => 'absent',
-          :name        => 'somestorage',
-          :driver      => 'dir',
-          :description => 'desc',
-          :config      => { 'source' => '/tmp/somestoragepool' },
-          # rubocop:enable HashSyntax
-        },
-      )
-      @provider = described_class.new(@resource) # rubocop:todo InstanceVariable
-    end
-
-    context 'with creating storage' do
-      before :each do
-        expect(described_class).to receive(:lxc).with(
+  describe '.create' do
+    context 'when not existing' do
+      before(:each) do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/storage-pools'],
+        ).and_return('[]')
+        expect(provider).to receive(:lxc).with(
           [
-            'query', '--wait', '-X', 'GET', '/1.0/storage-pools'
+            'query', '--wait', '-X', 'POST', '-d',
+            '{"name":"default-storage","driver":"dir","description":"default storage driver","config":{"volume.size":"1GiB"}}',
+            '/1.0/storage-pools'
           ],
-        ).and_return('["/1.0/storage-pools/somestorage"]')
-        expect(described_class).to receive(:lxc).with(
-          [
-            'query', '--wait', '-X', 'DELETE', '/1.0/storage-pools/somestorage'
-          ],
-        ).and_return('{}')
+        ).and_return('')
       end
-      it 'will create appropriate config' do
-        expect(@provider.exists?).to be true # rubocop:todo InstanceVariable
-        expect(@provider.destroy).to eq({}) # rubocop:todo InstanceVariable
+      it 'will create without error' do
+        expect(provider.exists?).to be false
+        expect { provider.create }.not_to raise_error
+      end
+    end
+  end
+
+  describe '.destroy' do
+    context 'when not existing' do
+      before(:each) do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/storage-pools'],
+        ).and_return('["/1.0/storage-pools/default-storage"]')
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'DELETE', '/1.0/storage-pools/default-storage'],
+        ).and_return('\n')
+      end
+      it 'will completed without error' do
+        expect(provider.exists?).to be true
+        expect { provider.destroy }.not_to raise_error
+      end
+    end
+  end
+
+  describe '.config' do
+    context 'change existing config' do
+      before(:each) do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/storage-pools/default-storage'],
+        ).and_return(
+          {
+            'config' => {},
+            'description' => 'default storage pool',
+            'driver' => 'dir',
+            'locations' => ['none'],
+            'name' => 'default-storage',
+            'status' => 'Created',
+            'used-by' => []
+          }.to_json,
+        )
+        expect(provider).to receive(:lxc).with(
+          [
+            'query', '--wait', '-X', 'PATCH', '-d',
+            '{"config":{"volume.size":"1GiB"}}', '/1.0/storage-pools/default-storage'
+          ],
+        ).and_return('\n')
+      end
+      it 'will not raise error' do
+        provider
+        expect(provider.config).to eql({})
+        expect { provider.config = { 'volume.size' => '1GiB' } }.not_to raise_error
+      end
+    end
+    context 'when source and volatile are set' do
+      before(:each) do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/storage-pools/default-storage'],
+        ).and_return(
+          {
+            'config' => {
+              'source' => '/path/to/somewhere',
+              'volatile.initial_source' => true
+            },
+            'description' => 'default storage pool',
+            'driver' => 'dir',
+            'locations' => ['none'],
+            'name' => 'default-storage',
+            'status' => 'Created',
+            'used-by' => []
+          }.to_json,
+        )
+      end
+      it 'will not return them' do
+        provider
+        expect(provider.config).to eql({})
+      end
+    end
+  end
+
+  describe '.description' do
+    context 'change existing description' do
+      before(:each) do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/storage-pools/default-storage'],
+        ).and_return(
+          '{"config":{},"description":"default storage pool","driver":"dir","locations":["none"],"name":"default-storage","status":"Created","used-by":[]}',
+        )
+        expect(provider).to receive(:lxc).with(
+          [
+            'query', '--wait', '-X', 'PATCH', '-d',
+            '{"description":"new description"}', '/1.0/storage-pools/default-storage'
+          ],
+        ).and_return('\n')
+      end
+      it 'will not raise error' do
+        provider
+        expect(provider.description).to eq('default storage pool')
+        expect { provider.description = 'new description' }.not_to raise_error
+      end
+    end
+  end
+
+  describe '.driver' do
+    context 'change of driver' do
+      before(:each) do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/storage-pools/default-storage'],
+        ).and_return(
+          {
+            'config' => {},
+            'description' => 'default storage pool',
+            'driver' => 'dir',
+            'locations' => ['none'],
+            'name' => 'default-storage',
+            'status' => 'Created',
+            'used-by' => [],
+          }.to_json,
+        )
+      end
+      it 'will result in error' do
+        provider
+        expect(provider.driver).to eq('dir')
+        expect { provider.driver = 'lvm' }.to raise_error %r{You cannot modify driver of already created storage!}
       end
     end
   end
