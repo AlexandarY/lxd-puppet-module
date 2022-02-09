@@ -29,6 +29,10 @@ class lxd::cluster (
 ) {
   $current_member = $members[$member_name]
 
+  if !$current_member {
+    fail("${member_name} is missing from \$members")
+  }
+
   # Retrieve `address` fields of all other members of the cluster
   $other_members = $members.filter | String $member_name, Hash $member_values | {
     $member_values['address'] != $current_member['address']
