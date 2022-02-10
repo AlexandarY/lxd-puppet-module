@@ -49,8 +49,9 @@ class myprofile { # lint:ignore:autoloader_layout
     image_alias => 'ubuntu1804',
   }
 
-  lxd::container { 'container01':
+  lxd::instance { 'container01':
     state    => 'started',
+    type     => 'container',
     config   => {
       'user.somecustomconfig' => 'My awesome custom env variable',
     },

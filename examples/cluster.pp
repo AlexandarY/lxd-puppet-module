@@ -57,8 +57,9 @@ node 'member01' {
     ensure => present
   }
 
-  lxd::container { 'container01':
+  lxd::instance { 'container01':
     ensure   => present,
+    type     => 'container',
     state    => 'started',
     config   => {},
     profiles => ['example-profile'],

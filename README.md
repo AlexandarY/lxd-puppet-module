@@ -123,10 +123,12 @@ See `examples/cluster.pp` for an exact example on how to setup a cluster.
 ## Defines
 
 
-### lxd::container
+### lxd::instance
 
-Defines used to create/manage state of the containers.  
+Define manages the state of the containers and virtual machines.
+
 Params are:
+ * `type` - Can either be `container` or `virtual-machine`.
  * `state` - Can either be `started` or `stopped`, defaults to `started`.
  * `ensure` - defaults to present,
  * `profiles` - list of profiles that will be used for the container.
@@ -203,6 +205,7 @@ This define configures LXD storage pools. It is similar to `lxd::profile` define
  * `driver` - driver for storage backend for more information on available backends check LXD REST API docs.
  * `config` - config of the storage backend
  * `description` - human friendly description for the storage backend.
+ * `source` - source to be used for the storage pool
 
 For the values that can be configuration or avaialbe drivers please consult [LXD REST API docs](https://github.com/lxc/lxd/blob/master/doc/rest-api.md#10storage-pools)
 
