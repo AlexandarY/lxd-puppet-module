@@ -9,7 +9,7 @@ describe 'lxd::storage' do
         {
           'driver' => 'dir',
           'description' => 'Managed by Puppet',
-          'src' => '/opt/data',
+          'source' => '/opt/data',
           'config' => {
             'volume.size' => '5GB'
           },
@@ -31,7 +31,7 @@ describe 'lxd::storage' do
             'ensure' => 'present',
             'description' => 'Managed by Puppet',
             'driver' => 'dir',
-            'src' => '/opt/data',
+            'source' => '/opt/data',
             'config' => {
               'volume.size' => '5GB'
             },

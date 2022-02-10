@@ -5,7 +5,7 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:lxd_storage) do
-  [:name, :src].each do |param|
+  [:name, :source].each do |param|
     it "has a #{param} parameter" do
       expect(Puppet::Type.type(:lxd_storage).attrtype(param)).to eq(:param)
     end

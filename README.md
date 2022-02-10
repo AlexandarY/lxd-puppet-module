@@ -23,7 +23,7 @@ This module adds the following resources defines to Puppet:
  - `lxd::profile`
  - `lxd::image`
  - `lxd::storage`
- - `lxd::instance`
+ - `lxd::container`
  
 # Requirements
 
@@ -205,7 +205,7 @@ This define configures LXD storage pools. It is similar to `lxd::profile` define
  * `driver` - driver for storage backend for more information on available backends check LXD REST API docs.
  * `config` - config of the storage backend
  * `description` - human friendly description for the storage backend.
- * `src` - source to be used for the storage pool
+ * `source` - source to be used for the storage pool
 
 For the values that can be configuration or avaialbe drivers please consult [LXD REST API docs](https://github.com/lxc/lxd/blob/master/doc/rest-api.md#10storage-pools)
 
