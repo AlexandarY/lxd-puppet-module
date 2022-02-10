@@ -6,6 +6,18 @@ Puppet::Type.type(:lxd_instance).provide(:instance) do
 
   ### Helper methods
 
+  # Retrieve all existing LXD instances
+  #
+  # @return Array[String] List of existing instances
+  def get_all_instances
+    begin # rubocop:disable RedundantBegin
+      resp = JSON.parse(lxc(['query', '--wait', '-X', 'GET', '/1.0/instances']))
+      resp
+    rescue JSON::ParserError => err
+      raise Puppet::Error, "Error while retreiving lxd instances - #{err}"
+    end
+  end
+
   # Retrieve LXD instance by name
   #
   # @param name [String] Name of the instance to be searched for
@@ -79,11 +91,8 @@ Puppet::Type.type(:lxd_instance).provide(:instance) do
 
   # checking if the resource exists
   def exists?
-    if get_instance(resource[:name]).nil?
-      false
-    else
-      true
-    end
+    instances = get_all_instances
+    instances.join(',').include? resource[:name]
   end
 
   # ensure absent handling

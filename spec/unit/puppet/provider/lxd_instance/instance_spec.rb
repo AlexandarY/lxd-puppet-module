@@ -94,7 +94,7 @@ describe Puppet::Type.type(:lxd_instance).provider(:instance) do
     describe '.exists?' do
       context 'when not existing' do
         before(:each) do
-          expect(provider).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/instances/ct01']).and_return('Error: Not Found')
+          expect(provider).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/instances']).and_return('[]')
         end
         it 'returns false' do
           expect(provider.exists?).to be false
@@ -102,7 +102,9 @@ describe Puppet::Type.type(:lxd_instance).provider(:instance) do
       end
       context 'when existing' do
         before(:each) do
-          expect(provider).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/instances/ct01']).and_return(ct_info.to_json)
+          expect(provider).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/instances']).and_return(
+            '[ "/1.0/instances/ct01" ]',
+          )
         end
         it 'returns true' do
           expect(provider.exists?).to be true
@@ -531,7 +533,7 @@ describe Puppet::Type.type(:lxd_instance).provider(:instance) do
     describe '.exists?' do
       context 'when not existing' do
         before(:each) do
-          expect(provider).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/instances/vm01']).and_return('Error: Not Found')
+          expect(provider).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/instances']).and_return('[]')
         end
         it 'returns false' do
           expect(provider.exists?).to be false
@@ -539,7 +541,9 @@ describe Puppet::Type.type(:lxd_instance).provider(:instance) do
       end
       context 'when existing' do
         before(:each) do
-          expect(provider).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/instances/vm01']).and_return(vm_info.to_json)
+          expect(provider).to receive(:lxc).with(['query', '--wait', '-X', 'GET', '/1.0/instances']).and_return(
+            '[ "/1.0/instances/vm01" ]',
+          )
         end
         it 'returns true' do
           expect(provider.exists?).to be true
