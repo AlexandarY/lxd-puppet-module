@@ -124,10 +124,10 @@ class lxd(
   Class['lxd']
   -> Lxd::Storage <| ensure == 'present' |>
   -> Lxd::Profile <| ensure == 'present' |>
-  -> Lxd::Container <| ensure == 'present' |>
+  -> Lxd::Instance <| ensure == 'present' |>
 
   Class['lxd']
-  -> Lxd::Container <| ensure == 'absent' |>
+  -> Lxd::Instance <| ensure == 'absent' |>
   -> Lxd::Profile <| ensure == 'absent' |>
   -> Lxd::Storage <| ensure == 'absent' |>
 }
