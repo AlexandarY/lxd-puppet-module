@@ -5,6 +5,16 @@
 #
 # @summary Manage LXD storage pool
 #
+# @example Simple usage
+#   lxd::storage { 'default-storage':
+#     ensure => present,
+#     driver => 'dir',
+#     config => {
+#       'rsync.compression' => true,
+#     },
+#     source => '/opt/data'
+#   }
+#
 # @param ensure
 #   Ensure the state of the resource
 # @param driver
@@ -17,17 +27,17 @@
 #   Path to block device or loop file or filesystem entry
 #
 define lxd::storage(
-    String                    $driver,
-    Hash                      $config      = {},
-    String                    $description = 'Managed by Puppet',
-    Optional[String]          $source      = undef,
-    Enum['present', 'absent'] $ensure      = present,
+  String                    $driver,
+  Hash[String, String]      $config      = {},
+  String                    $description = 'Managed by Puppet',
+  Optional[String]          $source      = undef,
+  Enum['present', 'absent'] $ensure      = present,
 ) {
-    lxd_storage { $name:
-        ensure      => $ensure,
-        driver      => $driver,
-        config      => $config,
-        source      => $source,
-        description => $description,
-    }
+  lxd_storage { $name:
+    ensure      => $ensure,
+    driver      => $driver,
+    config      => $config,
+    source      => $source,
+    description => $description,
+  }
 }

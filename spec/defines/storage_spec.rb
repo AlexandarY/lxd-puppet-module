@@ -21,7 +21,7 @@ describe 'lxd::storage' do
           super().merge(
             {
               'ensure' => 'present',
-            }
+            },
           )
         end
 
@@ -44,7 +44,7 @@ describe 'lxd::storage' do
           super().merge(
             {
               'ensure' => 'absent',
-            }
+            },
           )
         end
 
