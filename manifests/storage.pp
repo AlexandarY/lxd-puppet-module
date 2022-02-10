@@ -12,7 +12,7 @@
 #     config => {
 #       'rsync.compression' => true,
 #     },
-#     source => '/opt/data'
+#     src    => '/opt/data'
 #   }
 #
 # @param ensure
@@ -23,21 +23,21 @@
 #   Config values for the storage
 # @param description
 #   Description of the storage backend
-# @param source
-#   Path to block device or loop file or filesystem entry
+# @param src
+#   Path to block device or loop file or filesystem entry. Equivelent to LXD `source`.
 #
 define lxd::storage(
   String                    $driver,
   Hash[String, String]      $config      = {},
   String                    $description = 'Managed by Puppet',
-  Optional[String]          $source      = undef,
+  Optional[String]          $src         = undef,
   Enum['present', 'absent'] $ensure      = present,
 ) {
   lxd_storage { $name:
     ensure      => $ensure,
     driver      => $driver,
     config      => $config,
-    source      => $source,
+    src         => $src,
     description => $description,
   }
 }

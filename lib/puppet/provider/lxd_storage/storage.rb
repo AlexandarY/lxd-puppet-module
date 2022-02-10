@@ -83,8 +83,8 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
     }
 
     # If source is specified, add it to the create request
-    unless resource[:source].empty?
-      call_body['config'][:source] = resource[:source]
+    unless resource[:src].empty?
+      call_body['config'][:source] = resource[:src]
     end
 
     create_storage_pool(call_body)

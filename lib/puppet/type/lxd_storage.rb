@@ -11,7 +11,7 @@ Puppet::Type.newtype(:lxd_storage) do
     desc 'Unique name of the profile'
   end
 
-  newparam(:source) do
+  newparam(:src) do
     desc 'Path to block device or loop file or filesystem entry'
     defaultto ''
   end
