@@ -67,6 +67,7 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
       # initializes @property_hash for each storage-pool found
       new(
         :name => storage_pool['name'],
+        :ensure => :present,
         :driver => storage_pool['driver'],
         :description => storage_pool['description'],
         :config => storage_pool['config']
