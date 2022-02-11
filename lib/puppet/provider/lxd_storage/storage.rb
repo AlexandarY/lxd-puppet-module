@@ -59,13 +59,28 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
   end
 
   ### Provider methods
+  def self.instances
+    storage_pools = JSON.parse(lxc(['query', '--wait', '-X', 'GET', '/1.0/storage-pools']))
+    storage_pools.each do | pool_url |
+      storage_pool = JSON.parse(lxc(['query', '--wait', '-X', 'GET', pool_url]))
+
+      # initializes @property_hash for each storage-pool found
+      new(
+        :name => storage_pool['name'],
+        :driver => storage_pool['driver'],
+        :description => storage_pool['description'],
+        :config => storage_pool['config']
+      )
+    end
+  end
 
   # checking if the resource exists
   def exists?
     # if the entry '/storage-pools/somename' is present within array returned from /storage-pools
     # then the storage pool somename exists
-    storage_pools = get_storage_pools
-    storage_pools.join(',').include? resource[:name]
+    # storage_pools = get_storage_pools
+    # storage_pools.join(',').include? resource[:name]
+    @property_hash[:ensure] == :present
   end
 
   # ensure absent handling
@@ -92,14 +107,15 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
 
   # getter method for property config
   def config
-    storage_info = get_storage_pool(resource[:name])
-    config_hash = storage_info['config']
+    # storage_info = get_storage_pool(resource[:name])
+    # config_hash = storage_info['config']
     # Remove volatile.initial_source key from config as
-    config_hash.delete('volatile.initial_source')
+    # config_hash.delete('volatile.initial_source')
     # Remove 'source' from config as adjusting it on an
     # existing storage-pool is dangerous
-    config_hash.delete('source')
-    config_hash
+    # config_hash.delete('source')
+    # config_hash
+    @property_hash[:config]
   end
 
   # setter method for property config
@@ -112,9 +128,10 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
 
   # getter method for property description
   def description
-    response = get_storage_pool(resource[:name])
-    desc = response['description']
-    desc
+    # response = get_storage_pool(resource[:name])
+    # desc = response['description']
+    # desc
+    @property_hash[:description]
   end
 
   # setter method for property description
@@ -127,9 +144,10 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
 
   # getter method for property driver
   def driver
-    storage_hash = get_storage_pool(resource[:name])
-    driver = storage_hash['driver']
-    driver
+    # storage_hash = get_storage_pool(resource[:name])
+    # driver = storage_hash['driver']
+    # driver
+    @property_hash[:driver]
   end
 
   # setter method for property driver
