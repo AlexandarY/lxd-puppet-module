@@ -33,9 +33,14 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
   # Create a new storage-pool
   #
   # @param request_data [Hash] Data for Storage Pool API request
+  # @param target [String] Optional cluster member name
   # @return [nil]
-  def create_storage_pool(request_data)
-    lxc(['query', '--wait', '-X', 'POST', '-d', request_data.to_json, '/1.0/storage-pools'])
+  def create_storage_pool(request_data, target = nil)
+    if target.nil?
+      lxc(['query', '--wait', '-X', 'POST', '-d', request_data.to_json, '/1.0/storage-pools'])
+    else
+      lxc(['query', '--wait', '-X', 'POST', '-d', request_data.to_json, "/1.0/storage-pools?target=#{target}"])
+    end
   end
 
   # Edit an existing storage-pool
@@ -62,10 +67,18 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
     storage_pools.each do | pool_url |
       storage_pool = get_storage_pool(pool_url)
 
+      # when setting up storage in a cluster, storage-pool is in Pending state
+      # before it gets sets on all nodes.
+      if storage_pool['status'] == 'Pending'
+        ensure_status = :absent
+      else
+        ensure_status = :present
+      end
+
       # initializes @property_hash for each storage-pool found
       pools << new(
         :name => storage_pool['name'],
-        :ensure => :present,
+        :ensure => ensure_status,
         :driver => storage_pool['driver'],
         :description => storage_pool['description'],
         :config => storage_pool['config']
@@ -94,6 +107,26 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
     delete_storage_pool(resource[:name])
   end
 
+  # Retrieve cluster information
+  #
+  # @return [Hash] cluster information
+  def get_cluster_info
+    response = JSON.parse(lxc(['query', '-X', 'GET', '/1.0/cluster']))
+    response
+  rescue JSON::ParserError => err
+    raise Puppet::Error, "Error while parsing cluster info - #{err} - #{response}"
+  end
+
+  # Retrieve all cluster members
+  #
+  # @return [Array<String>] list of URLs to all members
+  def get_cluster_members
+    response = JSON.parse(lxc(['query', '-X', 'GET', '/1.0/cluster/members']))
+    response
+  rescue JSON::ParserError => err
+    raise Puppet::Error, "Error while parsing cluster member info - #{err} - #{response}"
+  end
+
   # ensure present handling
   def create
     call_body = {
@@ -108,7 +141,36 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
       call_body['config'][:source] = resource[:source]
     end
 
-    create_storage_pool(call_body)
+    # Retrieve information about cluster setup
+    cluster_info = get_cluster_info
+    # If clustering isn't enabled, create storage the standard way
+    unless cluster_info['enabled']
+      create_storage_pool(call_body)
+    else
+      # retrieve all cluster members and store only their names
+      members = get_cluster_members.collect { |member| member.split('/')[-1] }
+
+      # retrieve all storage-pools and check if the storage-pool is in the list
+      # If it is, then it was already initilized on a member node
+      # Else it's the first node to set it
+      # we do it this way to avoid possible 400 errors that might be returned
+      # on a direct storage-pools/<name> API call
+      storage_pools = get_storage_pools
+      node_pool = storage_pools.filter { |pool| pool.include? resource[:name] }
+
+      # Retrieve details about the storage-pool
+      storage_pool = get_storage_pool(node_pool)
+
+      # If it's Pending, but not on this node, run create to put it in
+      # Pending state for this cluster member
+      if storage_pool['status'] == 'Pending' && !storage_pool['locations'].include? cluster_info['server_name']
+        create_storage_pool(call_body, cluster_info['server_name'])
+      else
+        # It's pending on all members and needs global create to
+        # put it in Created state
+        create_storage_pool(call_body)
+      end
+    end
   end
 
   # getter method for property config
