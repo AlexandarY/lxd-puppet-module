@@ -17,12 +17,12 @@ Puppet LXD mangament module
 This is a Puppet Module which manages the state of LXD on the host including basic LXD daemon configuration, containers, profiles, storage pools.
 
 # Module Description
-This module installs LXD and is able to manage container states as well as most of container related configuration.
+This module installs LXD and is able to manage instance states as well as most of container related configuration.
 
 This module adds the following resources defines to Puppet:
  - `lxd::profile`
  - `lxd::image`
- - `lxd::storage`
+ - [`lxd::storage`](docs/storage.md)
  - `lxd::container`
  
 # Requirements
@@ -197,17 +197,6 @@ This define is responsible for adding images to your LXD daemon. It has two mode
     ```
 
 More details on the parameters and examples can be found in `REFERENCES.md`
-
-### lxd::storage
-
-This define configures LXD storage pools. It is similar to `lxd::profile` define in terms of usage. It has the following parameters:
- * `ensure` - defaults to present
- * `driver` - driver for storage backend for more information on available backends check LXD REST API docs.
- * `config` - config of the storage backend
- * `description` - human friendly description for the storage backend.
- * `source` - source to be used for the storage pool
-
-For the values that can be configuration or avaialbe drivers please consult [LXD REST API docs](https://github.com/lxc/lxd/blob/master/doc/rest-api.md#10storage-pools)
 
 # Example usage:
 
