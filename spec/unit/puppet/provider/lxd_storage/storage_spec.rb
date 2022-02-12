@@ -281,17 +281,72 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
   end
 
   describe 'config' do
-    context 'when changing storage-pool config' do
+    let(:resource) do
+      Puppet::Type.type(:lxd_storage).new(
+        name: 'default',
+        driver: 'lvm',
+        source: '/dev/sdb',
+        description: 'default storage',
+        config: {
+          'lvm.thinpool_name' => 'default-lvm',
+          'volume.size' => '5GB'
+        },
+        provider: described_class.new,
+      )
+    end
+    let(:provider) do
+      resource.provider
+    end
+
+    context 'when changing storage-pool config on a single node LXD' do
       it 'will complete successfully' do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/cluster'],
+        ).and_return(
+          {
+            'enabled' => false,
+            'member_config' => [],
+            'server_name' => ''
+          }.to_json,
+        )
         expect(provider).to receive(:lxc).with(
           [
             'query', '--wait', '-X', 'PATCH', '-d',
-            { 'config' => { 'volume.size' => '5GB' } }.to_json,
+            { 'config' => { 'lvm.thinpool_name' => 'new-default-lvm', 'volume.size' => '10GB' } }.to_json,
             '/1.0/storage-pools/default'
           ],
         ).and_return('\n')
 
-        expect { provider.config = { 'volume.size' => '5GB' } }.not_to raise_error
+        provider.config = { 'lvm.thinpool_name' => 'new-default-lvm', 'volume.size' => '10GB' }
+      end
+    end
+    context 'when changing storage-pool config on a LXD cluster member' do
+      it 'will complete successfully' do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/cluster'],
+        ).and_return(
+          {
+            'enabled' => true,
+            'member_config' => [],
+            'server_name' => 'node01'
+          }.to_json,
+        )
+        expect(provider).to receive(:lxc).with(
+          [
+            'query', '--wait', '-X', 'PATCH', '-d',
+            { 'config' => { 'lvm.thinpool_name' => 'new-default-lvm' } }.to_json,
+            '/1.0/storage-pools/default?target=node01'
+          ],
+        ).and_return('\n')
+        expect(provider).to receive(:lxc).with(
+          [
+            'query', '--wait', '-X', 'PATCH', '-d',
+            { 'config' => { 'volume.size' => '10GB' } }.to_json,
+            '/1.0/storage-pools/default'
+          ],
+        ).and_return('\n')
+
+        provider.config = { 'lvm.thinpool_name' => 'new-default-lvm', 'volume.size' => '10GB' }
       end
     end
   end

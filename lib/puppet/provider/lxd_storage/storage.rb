@@ -101,8 +101,12 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
   # @param pool_name [String] Name of the storage-pool to update
   # @param body [Hash] Values to be updated in storage-pool data
   # @return [nil]
-  def update_storage_pool(pool_name, body)
-    lxc(['query', '--wait', '-X', 'PATCH', '-d', body.to_json, "/1.0/storage-pools/#{pool_name}"])
+  def update_storage_pool(pool_name, body, target = nil)
+    if target.nil?
+      lxc(['query', '--wait', '-X', 'PATCH', '-d', body.to_json, "/1.0/storage-pools/#{pool_name}"])
+    else
+      lxc(['query', '--wait', '-X', 'PATCH', '-d', body.to_json, "/1.0/storage-pools/#{pool_name}?target=#{target}"])
+    end
   end
 
   # Delete an existing storage-pool
@@ -227,10 +231,17 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
 
   # setter method for property config
   def config=(config_hash)
-    call_body = {
-      'config' => config_hash,
-    }
-    update_storage_pool(resource[:name], call_body)
+    cluster = get_cluster_info
+
+    if !cluster['enabled']
+      update_storage_pool(resource[:name], { 'config' => config_hash })
+    else
+      config_per_node = prepare_config(config_hash.clone, true)
+      config_global = prepare_config(config_hash.clone, false)
+
+      update_storage_pool(resource[:name], { 'config' => config_per_node }, cluster['server_name'])
+      update_storage_pool(resource[:name], { 'config' => config_global })
+    end
   end
 
   # getter method for property description
