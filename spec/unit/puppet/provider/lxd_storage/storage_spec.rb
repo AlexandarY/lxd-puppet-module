@@ -170,13 +170,13 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
                 'name' => 'default',
                 'driver' => 'dir',
                 'description' => 'default storage',
-                'config' => { 'volume.size' => '5GB', 'source' => '/opt/data' }
+                'config' => { 'source' => '/opt/data' }
               }.to_json,
               '/1.0/storage-pools?target=node01'
             ],
           ).and_return('')
 
-          expect { provider.create }.not_to raise_error
+          provider.create
         end
       end
       context 'when storage does exist on a member, but not current one' do
@@ -197,7 +197,7 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
             ['query', '--wait', '-X', 'GET', '/1.0/storage-pools/default'],
           ).and_return(
             {
-              'config' => { 'volume.size' => '5GB' },
+              'config' => {},
               'description' => 'default storage',
               'driver' => 'dir',
               'locations' => [ 'node02', 'node03' ],
@@ -213,13 +213,13 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
                 'name' => 'default',
                 'driver' => 'dir',
                 'description' => 'default storage',
-                'config' => { 'volume.size' => '5GB', 'source' => '/opt/data' }
+                'config' => { 'source' => '/opt/data' }
               }.to_json,
               '/1.0/storage-pools?target=node01'
             ],
           ).and_return('')
 
-          expect { provider.create }.not_to raise_error
+          provider.create
         end
       end
       context 'when storage is Pending on all and needs global create' do
@@ -256,7 +256,7 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
                 'name' => 'default',
                 'driver' => 'dir',
                 'description' => 'default storage',
-                'config' => {}
+                'config' => { 'volume.size' => '5GB' }
               }.to_json,
               '/1.0/storage-pools'
             ],

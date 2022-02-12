@@ -7,10 +7,10 @@ require 'json'
 Puppet::Type.type(:lxd_storage).provide(:storage) do
   # When setting up a storage-pool in cluster,
   # the following keys cannot be used during commit Create API call
+  # but can be used when setting up per-member storage-pool
   # source: https://github.com/lxc/lxd/blob/master/lxd/db/storage_pools.go#L949
   NODE_SPECIFIC_POOL_CONFIG_KEYS = [
     'size',
-    'volume.size',
     'source',
     'volatile.initial_source',
     'zfs.pool_name',
@@ -143,6 +143,33 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
     raise Puppet::Error, "Error while parsing cluster member info - #{err} - #{response}"
   end
 
+  # In cluster setups, API calls per target vs overall commit accept different values for `config`
+  # this method filters values that are not meant for target or overcall commit
+  #
+  # @param config [Hash<String, String>] config data to process
+  # @param node_specific [Boolean] if data is meant for per-node setup or final create.
+  # @return [Hash<String, String>]
+  def prepare_config(config, node_specific = true)
+    if node_specific
+      # loop over all keys that will be passed on a node specific create API call
+      # and remove the ones that are not node specific
+      config.each_key do |config_key|
+        unless NODE_SPECIFIC_POOL_CONFIG_KEYS.include?(config_key)
+          config.delete(config_key)
+        end
+      end
+    else
+      # Global commit Create cannot contain specific storage-pool keys
+      # if found in the 'config' of the body, remove them
+      NODE_SPECIFIC_POOL_CONFIG_KEYS.each do |config_key|
+        if config.keys.include? config_key
+          config.delete(config_key)
+        end
+      end
+    end
+    config
+  end
+
   # ensure present handling
   def create
     call_body = {
@@ -171,31 +198,22 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
       storage_pools = self.class.get_storage_pools
       node_pool = storage_pools.select { |pool| pool.include? resource[:name] }
 
-      # if array is empty, then the pool is not pending anywhere
-      # do initial create
+      # if array is empty, then the pool is not pending anywhere. do initial create
       if node_pool.empty?
+        call_body['config'] = prepare_config(call_body['config'])
         create_storage_pool(call_body, cluster_info['server_name'])
       else
-        # Retrieve details about the storage-pool
         storage_pool = self.class.get_storage_pool(node_pool.first)
 
         # If it's Pending, but not on this node, run create to put it in
         # Pending state for this cluster member
         if storage_pool['status'] == 'Pending' && !storage_pool['locations'].include?(cluster_info['server_name'])
+          call_body['config'] = prepare_config(call_body['config'])
           create_storage_pool(call_body, cluster_info['server_name'])
         else
           # It's pending on all members and needs global create to
           # put it in Created state
-
-          # Global commit Create cannot contain specific storage-pool keys
-          # if found in the 'config' of the body, remove them
-          NODE_SPECIFIC_POOL_CONFIG_KEYS.each do |config_key|
-            if call_body['config'].keys.include? config_key
-              call_body['config'].delete(config_key)
-            end
-          end
-
-          call_body['config'].delete(:source)
+          call_body['config'] = prepare_config(call_body['config'], false)
           create_storage_pool(call_body)
         end
       end
