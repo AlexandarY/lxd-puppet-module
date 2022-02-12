@@ -43,7 +43,6 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
         instances = provider.class.instances
 
         expect(instances[0].name).to eql('default')
-        expect(instances[0].config).to eql({ 'volume.size' => '5GB' })
         expect(instances[0].driver).to eql('dir')
         expect(instances[0].description).to eql('default storage')
       end
@@ -114,7 +113,6 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
         )
 
         tmp_resource.provider.class.prefetch('default' => tmp_resource)
-        expect(tmp_resource.provider.config).to eq({ 'volume.size' => '5GB' })
         expect(tmp_resource.provider.description).to eq('default storage')
       end
     end
@@ -298,6 +296,64 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
       resource.provider
     end
 
+    context 'when retrieving config from a single node LXD' do
+      it 'will retrieve without ?target query' do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/cluster'],
+        ).and_return({ 'enabled' => false, 'member_config' => [], 'server_name' => '' }.to_json)
+        expect(provider.class).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/storage-pools/default'],
+        ).and_return(
+          {
+            'config' => {
+              'lvm.thinpool_name' => 'default-lvm',
+              'lvm.vg_name' => 'default',
+              'source' => 'lvm-pool',
+              'volatile.initial_source' => '/dev/sdb',
+              'volume.size' => '5GB'
+            },
+            'description' => 'default storage',
+            'driver' => 'lvm',
+            'locations' => ['none'],
+            'name' => 'default',
+            'status' => 'Created',
+            'used_by' => []
+          }.to_json,
+        )
+
+        provider
+        expect(provider.config).to eql({ 'lvm.thinpool_name' => 'default-lvm', 'volume.size' => '5GB' })
+      end
+    end
+    context 'when retrieving config from an LXD cluster member' do
+      it 'will retrieve via ?target query' do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/cluster'],
+        ).and_return({ 'enabled' => true, 'member_config' => [], 'server_name' => 'node01' }.to_json)
+        expect(provider.class).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/storage-pools/default?target=node01'],
+        ).and_return(
+          {
+            'config' => {
+              'lvm.thinpool_name' => 'default-lvm',
+              'lvm.vg_name' => 'default',
+              'source' => 'lvm-pool',
+              'volatile.initial_source' => '/dev/sdb',
+              'volume.size' => '5GB'
+            },
+            'description' => 'default storage',
+            'driver' => 'lvm',
+            'locations' => ['none'],
+            'name' => 'default',
+            'status' => 'Created',
+            'used_by' => []
+          }.to_json,
+        )
+
+        provider
+        expect(provider.config).to eql({ 'lvm.thinpool_name' => 'default-lvm', 'volume.size' => '5GB' })
+      end
+    end
     context 'when changing storage-pool config on a single node LXD' do
       it 'will complete successfully' do
         expect(provider).to receive(:lxc).with(

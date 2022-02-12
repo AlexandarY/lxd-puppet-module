@@ -41,8 +41,7 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
         name: storage_pool['name'],
         ensure: ensure_status,
         driver: storage_pool['driver'],
-        description: storage_pool['description'],
-        config: storage_pool['config'],
+        description: storage_pool['description']
       )
     end
     pools
@@ -226,7 +225,16 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
 
   # getter method for property config
   def config
-    @property_hash[:config]
+    cluster = get_cluster_info
+
+    if !cluster['enabled']
+      pool_info = self.class.get_storage_pool("/1.0/storage-pools/#{resource[:name]}")
+    else
+      pool_info = self.class.get_storage_pool("/1.0/storage-pools/#{resource[:name]}?target=#{cluster['server_name']}")
+    end
+    managed_keys = resource[:config].keys
+    config_data = pool_info['config'].select { |key, _value| managed_keys.include?(key) }
+    config_data
   end
 
   # setter method for property config
