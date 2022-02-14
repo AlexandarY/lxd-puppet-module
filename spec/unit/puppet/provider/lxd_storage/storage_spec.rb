@@ -44,7 +44,6 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
 
         expect(instances[0].name).to eql('default')
         expect(instances[0].driver).to eql('dir')
-        expect(instances[0].description).to eql('default storage')
       end
     end
     context 'when generating list of instances on cluster member' do
@@ -113,7 +112,7 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
         )
 
         tmp_resource.provider.class.prefetch('default' => tmp_resource)
-        expect(tmp_resource.provider.description).to eq('default storage')
+        expect(tmp_resource.provider.driver).to eq('dir')
       end
     end
   end
@@ -408,13 +407,78 @@ describe Puppet::Type.type(:lxd_storage).provider(:storage) do
   end
 
   describe 'description' do
-    context 'when changing storage-pool description' do
-      it 'will complete successfully' do
+    context 'when retrieving description for a storge-pool on a single-node LXD' do
+      it 'will retrieve description successfully' do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/cluster'],
+        ).and_return({ 'enabled' => false, 'member_config' => [], 'server_name' => '' }.to_json)
+        expect(provider.class).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/storage-pools/default'],
+        ).and_return(
+          {
+            'config' => { 'volume.size' => '5GB', 'source' => '/opt/data' },
+            'description' => 'default storage',
+            'driver' => 'dir',
+            'locations' => ['none'],
+            'name' => 'default',
+            'status' => 'Created',
+            'used_by' => [],
+          }.to_json,
+        )
+
+        provider
+        expect(provider.description).to eql('default storage')
+      end
+    end
+    context 'when retrieving description for a storage-pool of an LXD cluster member' do
+      it 'will retrieve description successfully' do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/cluster'],
+        ).and_return({ 'enabled' => true, 'member_config' => [], 'server_name' => 'node01' }.to_json)
+        expect(provider.class).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/storage-pools/default?target=node01'],
+        ).and_return(
+          {
+            'config' => { 'volume.size' => '5GB', 'source' => '/opt/data' },
+            'description' => 'default storage',
+            'driver' => 'dir',
+            'locations' => ['none'],
+            'name' => 'default',
+            'status' => 'Created',
+            'used_by' => [],
+          }.to_json,
+        )
+
+        provider
+        expect(provider.description).to eql('default storage')
+      end
+    end
+    context 'when changing description on a single node LXD server' do
+      it 'will change description successfully' do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/cluster'],
+        ).and_return({ 'enabled' => false, 'member_config' => [], 'server_name' => '' }.to_json)
         expect(provider).to receive(:lxc).with(
           [
             'query', '--wait', '-X', 'PATCH', '-d',
             { 'description' => 'new description' }.to_json,
-            '/1.0/storage-pools/default'
+            '/1.0/storage-pools/default',
+          ],
+        ).and_return('\n')
+
+        expect { provider.description = 'new description' }.not_to raise_error
+      end
+    end
+    context 'when changing storage-pool description on an LXD cluster member' do
+      it 'will change description successfully' do
+        expect(provider).to receive(:lxc).with(
+          ['query', '--wait', '-X', 'GET', '/1.0/cluster'],
+        ).and_return({ 'enabled' => true, 'member_config' => [], 'server_name' => 'node01' }.to_json)
+        expect(provider).to receive(:lxc).with(
+          [
+            'query', '--wait', '-X', 'PATCH', '-d',
+            { 'description' => 'new description' }.to_json,
+            '/1.0/storage-pools/default?target=node01'
           ],
         ).and_return('\n')
 

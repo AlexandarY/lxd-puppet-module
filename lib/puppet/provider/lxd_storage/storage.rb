@@ -41,7 +41,6 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
         name: storage_pool['name'],
         ensure: ensure_status,
         driver: storage_pool['driver'],
-        description: storage_pool['description']
       )
     end
     pools
@@ -254,15 +253,25 @@ Puppet::Type.type(:lxd_storage).provide(:storage) do
 
   # getter method for property description
   def description
-    @property_hash[:description]
+    cluster = get_cluster_info
+
+    pool_info = if !cluster['enabled']
+                  self.class.get_storage_pool("/1.0/storage-pools/#{resource[:name]}")
+                else
+                  self.class.get_storage_pool("/1.0/storage-pools/#{resource[:name]}?target=#{cluster['server_name']}")
+                end
+    pool_info['description']
   end
 
   # setter method for property description
   def description=(desc)
-    call_body = {
-      'description' => desc
-    }
-    update_storage_pool(resource[:name], call_body)
+    cluster = get_cluster_info
+
+    if !cluster['enabled']
+      update_storage_pool(resource[:name], { 'description' => desc })
+    else
+      update_storage_pool(resource[:name], { 'description' => desc }, cluster['server_name'])
+    end
   end
 
   # getter method for property driver
