@@ -16,6 +16,14 @@ Puppet LXD mangament module
 # Overview
 This is a Puppet Module which manages the state of LXD on the host including basic LXD daemon configuration, containers, profiles, storage pools.
 
+Project is a fork of the [ovh/lxd-puppet-module](https://github.com/ovh/lxd-puppet-module) module
+which appears to not be maintained anymore.
+
+Currently the project is work-in-progress for a `2.0.0` release, so if you plan to use this module
+be careful as types & parameters might change.
+
+Details on what changes can be found in [`CHANGELOG.md`](CHANGELOG.md).
+
 # Module Description
 This module installs LXD and is able to manage instance states as well as most of container related configuration.
 
